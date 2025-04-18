@@ -62,7 +62,7 @@ class _ContactUsState extends State<ContactUs> {
                 // Logo
                 Center(
                   child: Image.asset(
-                    'assets/Logo.png',
+                    'folder/Logo.png',
                     width: 150,
                     height: 150,
                     fit: BoxFit.contain,
