@@ -30,7 +30,7 @@ class _HomePageState extends State<HomePage> {
       child: Container(
         decoration: BoxDecoration(
           image: DecorationImage(
-            image: AssetImage('assets/SplashBackground.jpg'),
+            image: AssetImage('folder/SplashBackground.jpg'),
             fit: BoxFit.cover,
             alignment: Alignment(0.25, 0.0),
           ),
@@ -65,7 +65,7 @@ class _HomePageState extends State<HomePage> {
                       Container(
                         margin: EdgeInsets.only(bottom: 10),
                         child: Image.asset(
-                          'assets/Logo.png',
+                          'folder/Logo.png',
                           width: 250,
                           height: 120,
                           fit: BoxFit.contain,
@@ -121,7 +121,7 @@ class _HomePageState extends State<HomePage> {
                       BlendMode.srcATop,
                     ),
                     child: Image.asset(
-                      'assets/Logo.png',
+                      'folder/Logo.png',
                       width: 250,
                       height: 250,
                       fit: BoxFit.cover,
