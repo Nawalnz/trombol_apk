@@ -30,7 +30,7 @@ class _Onboarding1State extends State<Onboarding1> {
     return Container(
       decoration: BoxDecoration(
         image: DecorationImage(
-          image: AssetImage('assets/SplashBackground.jpg'),
+          image: AssetImage('folder/SplashBackground.jpg'),
           fit: BoxFit.cover,
           alignment: Alignment(0.25, 0.0),
         ),
@@ -112,7 +112,7 @@ class _Onboarding1State extends State<Onboarding1> {
                     BlendMode.srcATop,
                   ),
                   child: Image.asset(
-                    'assets/Logo.png',
+                    'folder/Logo.png',
                     width: 150,
                     height: 150,
                     fit: BoxFit.contain,
