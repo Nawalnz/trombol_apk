@@ -47,7 +47,7 @@ class _VerificationState extends State<Verification> {
                       BlendMode.srcATop,
                    ),
                child: Image.asset(
-                'assets/Logo.png',
+                'folder/Logo.png',
                 width: 150,
                 height: 150,
                 fit: BoxFit.contain,
