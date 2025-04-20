@@ -37,6 +37,7 @@ dependencies:
   cupertino_icons: ^1.0.6
 
 dev_dependencies:
+  flutter_launcher_icons: ^0.13.1  # or latest
   flutter_test:
     sdk: flutter
 
@@ -52,11 +53,19 @@ dev_dependencies:
 
 # The following section is specific to Flutter packages.
 flutter:
+  assets:
+    - assets/images/beach.jpg
+    - assets/images/atv.png
 
   # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
   # the material Icons class.
   uses-material-design: true
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/images/icon.png" # path to your icon image
 
   # To add assets to your application, add an assets section, like this:
   # assets:
