@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:trombol_apk/screens/homepage/explore.dart';
+import 'package:trombol_apk/screens/onboarding/onboarding1.dart';
+import 'package:trombol_apk/screens/onboarding/onboarding2.dart';
+
 import 'package:trombol_apk/screens/seller/booking_list.dart';
 import 'package:trombol_apk/screens/seller/product_detail.dart';
 import 'package:trombol_apk/screens/seller/seller_main.dart';
@@ -21,15 +25,20 @@ class MyApp extends StatelessWidget {
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.teal),
         useMaterial3: true,
       ),
-      // initialRoute: '/login',  // Change this based on testing
-        routes: {
-          '/': (context) => const SellerDashboard(),
-          '/seller-main': (context) => const SellerMain(),
-          '/upload': (context) => const UploadProductPage(),
-          '/bookings': (context) => const BookingListPage(),
-          '/products': (context) => const ProductDetailPage(), // Or your actual product list screen
-          '/home': (context) => const SellerDashboard(), // Assuming home = dashboard
-        },
+
+      // 👇 This will launch the onboarding page first
+      initialRoute: '/',
+
+      routes: {
+        '/': (context) => const Onboarding1(),               // First screen (onboarding)
+        '/next': (context) => const HomePage(),               // 2nd screen (onboarding)
+        '/explore': (context) => const ExploreToday(),               // First screen (onboarding)
+        '/seller-main': (context) => const SellerMain(),     // Seller's main page
+        '/upload': (context) => const UploadProductPage(),   // Upload product page
+        '/bookings': (context) => const BookingListPage(),   // View bookings
+        '/products': (context) => const ProductDetailPage(), // Product detail
+        '/home': (context) => const SellerDashboard(),       // Seller dashboard
+      },
     );
   }
 }

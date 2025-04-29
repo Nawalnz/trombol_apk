@@ -59,14 +59,6 @@ class SellerDashboard extends StatelessWidget {
           const SizedBox(height: 24),
 
           // Action Buttons
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              _buildActionCard(Icons.add, 'Add Product', context),
-              _buildActionCard(Icons.list_alt, 'Manage Booking', context),
-              _buildActionCard(Icons.view_list, 'View Product', context),
-            ],
-          ),
           const SizedBox(height: 16),
         ],
       ),

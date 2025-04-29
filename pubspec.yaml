@@ -30,6 +30,10 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
+  url_launcher: ^6.2.5
+  ticket_widget: ^1.0.0
+  barcode_widget: ^2.0.1
+  qr_flutter: ^4.0.0
 
 
   # The following adds the Cupertino Icons font to your application.
@@ -56,8 +60,30 @@ flutter:
   assets:
     - assets/images/beach.jpg
     - assets/images/atv.png
+    - assets/images/Logo.png
+    - assets/images/SplashBackground.jpg
+    - assets/images/trombol.jpeg
+    - assets/images/air_balang.jpeg
+    - assets/images/barcode.png
+    - assets/images/beach_volleyball.jpeg
+    - assets/images/borneo_happy_farm.png
+    - assets/images/borneo_jungle.jpeg
+    - assets/images/cultural_museum.png
+    - assets/images/damai.jpeg
+    - assets/images/damaii.jpeg
+    - assets/images/damaiii.jpeg
+    - assets/images/fpx_logo.png
+    - assets/images/google_icon.png
+    - assets/images/kch_waterfront.png
+    - assets/images/mastercard.png
+    - assets/images/monkey.png
+    - assets/images/niah.jpeg
+    - assets/images/oden.png
+    - assets/images/qr-code.png
+    - assets/images/trombol_logo.png
+    - assets/images/trombol_logo_dark.png
 
-  # The following line ensures that the Material Icons font is
+      # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
   # the material Icons class.
   uses-material-design: true
