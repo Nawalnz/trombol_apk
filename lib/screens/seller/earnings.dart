@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:syncfusion_flutter_charts/charts.dart';
 
+import 'dashboard.dart';
+
 class EarningsPage extends StatelessWidget {
   const EarningsPage({super.key});
 
@@ -14,6 +16,15 @@ class EarningsPage extends StatelessWidget {
       EarningsData('May', 1700),
       EarningsData('Jun', 1900),
     ];
+
+    final double totalEarnings = earnings.fold(0, (sum, e) => sum + e.amount);
+
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => SellerDashboard(totalEarnings: totalEarnings),
+      ),
+    );
 
     return Scaffold(
       appBar: AppBar(
