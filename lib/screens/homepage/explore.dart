@@ -179,7 +179,7 @@ class ExploreTodayContent extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(20),
-        boxShadow: [BoxShadow(color: Colors.grey, blurRadius: 5)],
+        boxShadow: const [BoxShadow(color: Colors.grey, blurRadius: 5)],
       ),
       child: Row(
         children: [
@@ -211,7 +211,7 @@ class ExploreTodayContent extends StatelessWidget {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
         color: Colors.white,
-        boxShadow: [
+        boxShadow: const [
           BoxShadow(color: Colors.black12, blurRadius: 4),
         ],
       ),
@@ -245,8 +245,8 @@ class ExploreTodayContent extends StatelessWidget {
               children: [
                 Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
                 const SizedBox(height: 4),
-                Row(
-                  children: const [
+                const Row(
+                  children: [
                     Icon(Icons.star, size: 14, color: Colors.orange),
                     Icon(Icons.star, size: 14, color: Colors.orange),
                     Icon(Icons.star, size: 14, color: Colors.orange),

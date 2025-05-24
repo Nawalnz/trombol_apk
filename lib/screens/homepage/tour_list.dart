@@ -92,8 +92,8 @@ class TourListPage extends StatelessWidget {
                                   style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                                 ),
                                 const SizedBox(height: 4),
-                                Row(
-                                  children: const [
+                                const Row(
+                                  children: [
                                     Icon(Icons.star, size: 14, color: Colors.orange),
                                     Icon(Icons.star, size: 14, color: Colors.orange),
                                     Icon(Icons.star, size: 14, color: Colors.orange),

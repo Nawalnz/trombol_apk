@@ -46,7 +46,7 @@ class PaymentInputScreen extends StatelessWidget {
               padding: const EdgeInsets.all(20),
               child: Stack(
                 children: [
-                  Column(
+                  const Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -140,12 +140,12 @@ class PaymentInputScreen extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 RichText(
-                  text: TextSpan(
+                  text: const TextSpan(
                     text: 'RM1200',
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.w600,
-                      color: const Color(0xFF085374),
+                      color: Color(0xFF085374),
                     ),
                     children: [
                       TextSpan(
@@ -153,7 +153,7 @@ class PaymentInputScreen extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w400,
-                          color: const Color(0xFF085374),
+                          color: Color(0xFF085374),
                         ),
                       ),
                     ],
@@ -176,7 +176,7 @@ class PaymentInputScreen extends StatelessWidget {
                       MaterialPageRoute(builder: (context) => const BookingSuccessScreen()),
                     );
                   },
-                  child: Text(
+                  child: const Text(
                     'Confirm',
                     style: TextStyle(
                       color: Colors.white,

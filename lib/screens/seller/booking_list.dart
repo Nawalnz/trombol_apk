@@ -66,9 +66,10 @@ class BookingListPage extends StatelessWidget {
           ),
 
           // Header Row
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 4),
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 4),
             child: Row(
+              // ignore: unnecessary_const
               children: const [
                 Expanded(child: Text('ID', style: TextStyle(fontWeight: FontWeight.bold))),
                 Expanded(child: Text('Customer', style: TextStyle(fontWeight: FontWeight.bold))),

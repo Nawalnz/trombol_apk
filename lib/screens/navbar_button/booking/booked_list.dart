@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 class BookingsPage extends StatelessWidget {
-  const BookingsPage({Key? key}) : super(key: key);
+  const BookingsPage({super.key});
 
   final List<Map<String, dynamic>> trips = const [
     {

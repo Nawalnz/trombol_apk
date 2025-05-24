@@ -1,36 +1,149 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
-void main() {
-  runApp(const MaterialApp(
-    debugShowCheckedModeBanner: false,
-    home: CreateAcc(),
-  ));
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
+  runApp(const MyApp());
+}
+
+class MyApp extends StatelessWidget {
+  const MyApp({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const MaterialApp(
+      debugShowCheckedModeBanner: false,
+      home: CreateAcc(),
+    );
+  }
 }
 
 class CreateAcc extends StatefulWidget {
   const CreateAcc({super.key});
 
   @override
-  State<CreateAcc> createState() => _CreateAcc();
+  State<CreateAcc> createState() => _CreateAccState();
 }
 
-class _CreateAcc extends State<CreateAcc> {
+class _CreateAccState extends State<CreateAcc> {
   final _formKey = GlobalKey<FormState>();
   bool acceptedTerms = false;
   bool _passwordVisible = false;
+  bool _isLoading = false;
 
-  final TextEditingController firstNameController = TextEditingController();
-  final TextEditingController lastNameController = TextEditingController();
+  final TextEditingController firstNameController   = TextEditingController();
+  final TextEditingController lastNameController    = TextEditingController();
   final TextEditingController phoneNumberController = TextEditingController();
-  final TextEditingController ageController = TextEditingController();
-  final TextEditingController emailController = TextEditingController();
-  final TextEditingController passwordController = TextEditingController();
+  final TextEditingController emailController       = TextEditingController();
+  final TextEditingController passwordController    = TextEditingController();
+
+  @override
+  void dispose() {
+    firstNameController.dispose();
+    lastNameController.dispose();
+    phoneNumberController.dispose();
+    emailController.dispose();
+    passwordController.dispose();
+    super.dispose();
+  }
+
+  //helper to show green (success) or red (error) snackbars
+  // try changing to navigation
+  void _showSnackBar(String message, {required bool isError}) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: isError ? Colors.red : Colors.green,
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 3),
+      ),
+    );
+  }
+
+  Future<void> _register() async {
+    debugPrint('_register() start');
+
+    // Validate form & terms
+    if (!_formKey.currentState!.validate() || !acceptedTerms) {
+      _showSnackBar('Please complete the form!', isError: true);
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+      debugPrint('[spinner ON]');
+    });
+
+    try {
+      // Create Firebase Auth user
+      debugPrint('Creating user with email & password...');
+      final UserCredential cred =
+      await FirebaseAuth.instance.createUserWithEmailAndPassword(
+        email: emailController.text.trim(),
+        password: passwordController.text.trim(),
+      );
+      debugPrint('Auth success: uid=${cred.user?.uid}');
+      if (!mounted) return;
+
+      // Write extra profile data to Firestore
+      debugPrint('Writing user profile to Firestore...');
+      await FirebaseFirestore.instance
+          .collection('users')
+          .doc(cred.user!.uid)
+          .set({
+        'firstName': firstNameController.text.trim(),
+        'lastName':  lastNameController.text.trim(),
+        'phone':     phoneNumberController.text.trim(),
+        'email':     emailController.text.trim(),
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+      debugPrint('Firestore write success');
+      if (!mounted) return;
+
+      // 4️⃣ Dismiss keyboard, stop spinner & show success snackbar
+      FocusScope.of(context).unfocus();
+      setState(() => _isLoading = false);
+      debugPrint('✅ about to show SUCCESS snack');
+      _showSnackBar('Account created successfully!', isError: false);
+    }
+    on FirebaseAuthException catch (e) {
+      debugPrint('FirebaseAuthException: ${e.code}');
+      if (mounted) {
+        setState(() => _isLoading = false);
+        _showSnackBar('Auth error: ${e.message ?? e.code}', isError: true);
+      }
+    }
+    on FirebaseException catch (e) {
+      debugPrint('FirebaseException: ${e.code}');
+      if (mounted) {
+        setState(() => _isLoading = false);
+        _showSnackBar('Database error: ${e.message}', isError: true);
+      }
+    }
+    catch (e, stack) {
+      debugPrint('Unexpected error in _register(): $e\n$stack');
+      if (mounted) {
+        setState(() => _isLoading = false);
+        _showSnackBar('Unexpected error: $e', isError: true);
+      }
+    }
+    finally {
+      // ensure spinner is off if still mounted
+      if (mounted && _isLoading) {
+        debugPrint('[🔄] spinner OFF in finally');
+        setState(() => _isLoading = false);
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text(""),
+        title: const Text(''),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.pop(context),
@@ -40,169 +153,161 @@ class _CreateAcc extends State<CreateAcc> {
         foregroundColor: Colors.black,
       ),
       body: SafeArea(
-        child: LayoutBuilder(
-          builder: (context, constraints) {
-            return SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: ConstrainedBox(
-                constraints: BoxConstraints(minHeight: constraints.maxHeight),
-                child: IntrinsicHeight(
-                  child: Column(
-                    children: [
-                      Expanded(
-                        child: Form(
-                          key: _formKey,
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const Text(
-                                "Create account",
-                                style: TextStyle(
-                                  fontSize: 22,
-                                  fontWeight: FontWeight.bold,
+        child: LayoutBuilder(builder: (ctx, constraints) {
+          return SingleChildScrollView(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: ConstrainedBox(
+              constraints: BoxConstraints(minHeight: constraints.maxHeight),
+              child: IntrinsicHeight(
+                child: Column(
+                  children: [
+                    Expanded(
+                      child: Form(
+                        key: _formKey,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              'Create account',
+                              style: TextStyle(
+                                fontSize: 22,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            const Text(
+                              'Get the best out of Paradise Trombol by creating an account',
+                              style: TextStyle(
+                                color: Colors.black54,
+                                fontSize: 14,
+                              ),
+                            ),
+                            const SizedBox(height: 14),
+                            buildInputField('First name', firstNameController),
+                            buildInputField('Last name', lastNameController),
+                            const Text('Phone'),
+                            const SizedBox(height: 6),
+                            Row(
+                              children: [
+                                SizedBox(
+                                  width: 60,
+                                  child: TextFormField(
+                                    initialValue: '+60',
+                                    enabled: false,
+                                    decoration: const InputDecoration(
+                                      isDense: true,
+                                      contentPadding: EdgeInsets.symmetric(
+                                          horizontal: 8, vertical: 12),
+                                      border: OutlineInputBorder(),
+                                    ),
+                                  ),
                                 ),
-                              ),
-                              const SizedBox(height: 4),
-                              const Text(
-                                "Get the best out of Paradise Trombol by creating an account",
-                                style: TextStyle(color: Colors.black54, fontSize: 14),
-                              ),
-                              const SizedBox(height: 14),
-
-                              buildInputField("First name", firstNameController),
-                              buildInputField("Last name", lastNameController),
-
-                              const Text("Phone"),
-                              const SizedBox(height: 6),
-                              Row(
-                                children: [
-                                  SizedBox(
-                                    width: 60,
-                                    child: TextFormField(
-                                      initialValue: "+60",
-                                      enabled: false,
-                                      decoration: const InputDecoration(
-                                        isDense: true,
-                                        contentPadding: EdgeInsets.symmetric(horizontal: 8, vertical: 12),
-                                        border: OutlineInputBorder(),
-                                      ),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: TextFormField(
+                                    controller: phoneNumberController,
+                                    keyboardType: TextInputType.phone,
+                                    decoration: const InputDecoration(
+                                      hintText: '123 456 789',
+                                      isDense: true,
+                                      contentPadding: EdgeInsets.symmetric(
+                                          horizontal: 12, vertical: 14),
+                                      border: OutlineInputBorder(),
                                     ),
                                   ),
-                                  const SizedBox(width: 10),
-                                  Expanded(
-                                    child: TextFormField(
-                                      controller: phoneNumberController,
-                                      keyboardType: TextInputType.phone,
-                                      decoration: const InputDecoration(
-                                        hintText: "123 456 789",
-                                        isDense: true,
-                                        contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 14),
-                                        border: OutlineInputBorder(),
-                                      ),
-                                    ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 12),
+                            buildInputField(
+                              'Email',
+                              emailController,
+                              keyboardType: TextInputType.emailAddress,
+                            ),
+                            buildInputField(
+                              'Password',
+                              passwordController,
+                              isPassword: true,
+                            ),
+                            const SizedBox(height: 10),
+                            Row(
+                              children: [
+                                Checkbox(
+                                  value: acceptedTerms,
+                                  onChanged: (v) =>
+                                      setState(() => acceptedTerms = v ?? false),
+                                ),
+                                const Expanded(
+                                  child: Text(
+                                    'I accept the Terms & Conditions',
+                                    style: TextStyle(fontSize: 15),
                                   ),
-                                ],
-                              ),
-                              const SizedBox(height: 12),
-
-                              buildInputField("Age", ageController, keyboardType: TextInputType.number),
-                              buildInputField("Email", emailController, keyboardType: TextInputType.emailAddress),
-                              buildInputField("Password", passwordController, isPassword: true),
-
-                              const SizedBox(height: 10),
-
-                              Row(
-                                children: [
-                                  Checkbox(
-                                    value: acceptedTerms,
-                                    onChanged: (value) {
-                                      setState(() {
-                                        acceptedTerms = value ?? false;
-                                      });
-                                    },
-                                  ),
-                                  const Expanded(
-                                    child: Text(
-                                      "I accept term and condition",
-                                      style: TextStyle(fontSize: 13),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ],
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 45,
+                      child: _isLoading
+                          ? const Center(child: CircularProgressIndicator())
+                          : ElevatedButton(
+                        onPressed: _register,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF1E3D6B),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                        child: const Text(
+                          'Create Account',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
                       ),
-
-                      const SizedBox(height: 16),
-
-                      Column(
-                        children: [
-                          SizedBox(
-                            width: double.infinity,
-                            height: 45,
-                            child: ElevatedButton(
-                              onPressed: () {
-                                if (_formKey.currentState!.validate() && acceptedTerms) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(content: Text("Account Created!")),
-                                  );
-                                } else {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(content: Text("Please complete the form")),
-                                  );
-                                }
-                              },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: const Color(0xFF1E3D6B),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(10),
-                                ),
-                              ),
-                              child: const Text(
-                                "Create Account",
-                                style: TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
-                                ),
+                    ),
+                    const SizedBox(height: 16),
+                    GestureDetector(
+                      onTap: () => Navigator.pop(context),
+                      child: const Text.rich(
+                        TextSpan(
+                          text: 'Already have an account? ',
+                          children: [
+                            TextSpan(
+                              text: 'Go back',
+                              style: TextStyle(
+                                color: Colors.black,
+                                fontWeight: FontWeight.bold,
                               ),
                             ),
-                          ),
-                          const SizedBox(height: 16),
-                          GestureDetector(
-                            onTap: () => Navigator.pop(context),
-                            child: const Text.rich(
-                              TextSpan(
-                                text: "Already have an account? ",
-                                children: [
-                                  TextSpan(
-                                    text: "Go back",
-                                    style: TextStyle(
-                                      color: Colors.black,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 10),
-                        ],
-                      )
-                    ],
-                  ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                  ],
                 ),
               ),
-            );
-          },
-        ),
+            ),
+          );
+        }),
       ),
     );
   }
 
-  Widget buildInputField(String label, TextEditingController controller,
-      {bool isPassword = false, TextInputType keyboardType = TextInputType.text}) {
+  Widget buildInputField(
+      String label,
+      TextEditingController controller, {
+        bool isPassword = false,
+        TextInputType keyboardType = TextInputType.text,
+      }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Column(
@@ -215,30 +320,23 @@ class _CreateAcc extends State<CreateAcc> {
             obscureText: isPassword ? !_passwordVisible : false,
             keyboardType: keyboardType,
             decoration: InputDecoration(
-              hintText: "Enter $label",
+              hintText: 'Enter $label',
               isDense: true,
-              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+              contentPadding:
+              const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
               border: const OutlineInputBorder(),
               suffixIcon: isPassword
                   ? IconButton(
-                icon: Icon(
-                  _passwordVisible ? Icons.visibility : Icons.visibility_off,
-                  color: Colors.grey,
-                ),
-                onPressed: () {
-                  setState(() {
-                    _passwordVisible = !_passwordVisible;
-                  });
-                },
+                icon: Icon(_passwordVisible
+                    ? Icons.visibility
+                    : Icons.visibility_off),
+                onPressed: () =>
+                    setState(() => _passwordVisible = !_passwordVisible),
               )
                   : null,
             ),
-            validator: (value) {
-              if (value == null || value.isEmpty) {
-                return 'Enter $label';
-              }
-              return null;
-            },
+            validator: (value) =>
+            (value == null || value.isEmpty) ? 'Enter $label' : null,
           ),
         ],
       ),

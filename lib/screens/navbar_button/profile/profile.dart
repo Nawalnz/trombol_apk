@@ -24,16 +24,16 @@ class ProfilePage extends StatelessWidget {
         padding: const EdgeInsets.all(16),
         children: [
           // Profile Header
-          Row(
+          const Row(
             children: [
-              const CircleAvatar(
+              CircleAvatar(
                 radius: 32,
                 backgroundImage: NetworkImage('https://i.pravatar.cc/150?img=3'),
               ),
-              const SizedBox(width: 12),
+              SizedBox(width: 12),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                children: const [
+                children: [
                   Text(
                     "Melissa Doe",
                     style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),

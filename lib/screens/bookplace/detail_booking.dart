@@ -244,7 +244,7 @@ class _BookingPageState extends State<BookingPage> {
                   ),
                 );
               },
-              child: Text(
+              child: const Text(
                 'Next',
                 style: TextStyle(
                   color: Colors.white,

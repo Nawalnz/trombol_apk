@@ -37,7 +37,7 @@ class BookingSuccessScreen extends StatelessWidget {
                     fit: BoxFit.contain,
                   ),
                   const SizedBox(height: 24),
-                  Text(
+                  const Text(
                     'Booking\nSuccessful!',
                     textAlign: TextAlign.center,
                     style: TextStyle(
@@ -47,7 +47,7 @@ class BookingSuccessScreen extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(height: 12),
-                  Text(
+                  const Text(
                     'Get ready to pack!',
                     style: TextStyle(
                       color: Colors.white70,
@@ -73,7 +73,7 @@ class BookingSuccessScreen extends StatelessWidget {
                           MaterialPageRoute(builder: (context) => const BookingConfirmedPage()),
                         );
                       },
-                      child: Text(
+                      child: const Text(
                         'View Booking Details',
                         style: TextStyle(
                           fontSize: 14,
@@ -100,7 +100,7 @@ class BookingSuccessScreen extends StatelessWidget {
                           MaterialPageRoute(builder: (context) => const ExploreToday()),
                         );
                       },
-                      child: Text(
+                      child: const Text(
                         'Back to home',
                         style: TextStyle(
                           color: Colors.black,

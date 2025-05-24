@@ -136,7 +136,7 @@ class TourDetailPage extends StatelessWidget {
             right: 0,
             child: Container(
               padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
+              decoration: const BoxDecoration(
                 color: Colors.white,
                 boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 10)],
               ),
@@ -225,8 +225,8 @@ class TourDetailPage extends StatelessWidget {
   }
 
   Widget _ratingRow() {
-    return Row(
-      children: const [
+    return const Row(
+      children: [
         Icon(Icons.star, color: Colors.orange, size: 16),
         Icon(Icons.star, color: Colors.orange, size: 16),
         Icon(Icons.star, color: Colors.orange, size: 16),

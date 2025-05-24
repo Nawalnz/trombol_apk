@@ -77,7 +77,7 @@ class PaymentPage extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 RichText(
-                  text: TextSpan(
+                  text: const TextSpan(
                     text: 'Total price',
                     style: TextStyle(
                       fontSize: 16,
@@ -97,7 +97,7 @@ class PaymentPage extends StatelessWidget {
                   ),
                 ),
                 RichText(
-                  text: TextSpan(
+                  text: const TextSpan(
                     text: 'RM1200',
                     style: TextStyle(
                       fontSize: 16,
@@ -151,7 +151,7 @@ class PaymentPage extends StatelessWidget {
                     MaterialPageRoute(builder: (context) => const PaymentInputScreen()),
                   );
                 },
-                child: Text(
+                child: const Text(
                   'Process Payment',
                   style: TextStyle(
                     color: Colors.white,
@@ -204,7 +204,7 @@ class PaymentMethodOption extends StatelessWidget {
           Expanded(
             child: Text(
               label,
-              style: TextStyle(
+              style: const TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w400, // Regular weight
               ),

@@ -1,174 +1,122 @@
 import 'package:flutter/material.dart';
-
-void main() {
-  runApp(const ResetPwdApp());
-}
-
-class ResetPwdApp extends StatelessWidget {
-  const ResetPwdApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData.dark().copyWith(
-        scaffoldBackgroundColor: const Color.fromARGB(255, 18, 32, 47),
-      ),
-      home: const Scaffold(
-        body: ResetPassword(),
-      ),
-    );
-  }
-}
+import 'package:firebase_auth/firebase_auth.dart';
 
 class ResetPassword extends StatefulWidget {
-  const ResetPassword({super.key});
+  final String oobCode;
+  const ResetPassword({super.key, required this.oobCode});
 
   @override
   State<ResetPassword> createState() => _ResetPasswordState();
 }
 
 class _ResetPasswordState extends State<ResetPassword> {
-  bool _obscurePassword = true;
+  final _pwdCtrl = TextEditingController();
+  bool _obscure = true, _loading = false;
+  String? _email;
+  String? _codeError;
+
+  @override
+  void initState() {
+    super.initState();
+    _verifyCode();
+  }
+
+  Future<void> _verifyCode() async {
+    try {
+      final email = await FirebaseAuth.instance
+          .verifyPasswordResetCode(widget.oobCode);
+      if (!mounted) return;
+      setState(() => _email = email);
+    } on FirebaseAuthException catch (e) {
+      if (!mounted) return;
+      setState(() => _codeError = e.message);
+    }
+  }
+
+  Future<void> _submit() async {
+    final messenger = ScaffoldMessenger.of(context);
+    final pwd = _pwdCtrl.text.trim();
+    if (pwd.length < 6) {
+      messenger.showSnackBar(const SnackBar(
+        content: Text('Password must be ≥ 6 chars'),
+        backgroundColor: Colors.red,
+      ));
+      return;
+    }
+    setState(() => _loading = true);
+    try {
+      await FirebaseAuth.instance.confirmPasswordReset(
+        code: widget.oobCode,
+        newPassword: pwd,
+      );
+      messenger.showSnackBar(const SnackBar(
+        content: Text('Password reset! Please login.'),
+        backgroundColor: Colors.green,
+      ));
+      Navigator.of(context).pop(); // back to login
+    } on FirebaseAuthException catch (e) {
+      messenger.showSnackBar(SnackBar(
+        content: Text(e.message ?? 'Error resetting password'),
+        backgroundColor: Colors.red,
+      ));
+    } finally {
+      if (mounted) setState(() => _loading = false);
+    }
+  }
+
+  @override
+  void dispose() {
+    _pwdCtrl.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox.expand(
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 26, vertical: 50),
-        decoration: const BoxDecoration(color: Colors.white),
-        child: ListView(
+    if (_codeError != null) {
+      return Center(
+        child: Text(
+          'Invalid or expired link:\n$_codeError',
+          textAlign: TextAlign.center,
+          style: const TextStyle(color: Colors.red),
+        ),
+      );
+    }
+    if (_email == null) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    return Scaffold(
+      appBar: AppBar(title: const Text('Reset Password')),
+      body: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            // Top-Left Arrow Icon
-            Align(
-              alignment: Alignment.topLeft,
-              child: IconButton(
-                icon: const Icon(Icons.arrow_back, color: Colors.black),
-                onPressed: () {
-                  // Handle navigation manually
-                  // Navigator.pop(context);
-                },
-              ),
-            ),
-
-            const SizedBox(height: 10),
-
-            // Trombol Logo
-            Row(
-              mainAxisAlignment: MainAxisAlignment.start,
-              children: [
-                Container(
-                  width: 103,
-                  height: 102,
-                  decoration: const BoxDecoration(
-                    image: DecorationImage(
-                      image: AssetImage("assets/trombol_logo_dark.png"),
-                      fit: BoxFit.fill,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-
+            Text('Resetting for: $_email'),
             const SizedBox(height: 20),
-
-            const Text(
-              'Create New Password',
-              style: TextStyle(
-                color: Colors.black,
-                fontSize: 20,
-                fontFamily: 'Poppins',
-                fontWeight: FontWeight.w600,
-                letterSpacing: -0.17,
-              ),
-            ),
-
-            const SizedBox(height: 5),
-
-            const Text(
-              'Keep your account secure by creating a strong password',
-              style: TextStyle(
-                color: Colors.black54,
-                fontSize: 15,
-                fontFamily: 'Poppins',
-                fontWeight: FontWeight.w400,
-                letterSpacing: -0.17,
-              ),
-            ),
-
-            const SizedBox(height: 30),
-
-            // 🔐 Password Field with Eye Icon
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 15),
-              decoration: BoxDecoration(
-                border: Border.all(color: Colors.black),
-                borderRadius: BorderRadius.circular(15),
-              ),
-              child: TextField(
-                obscureText: _obscurePassword,
-                decoration: InputDecoration(
-                  hintText: 'Enter new password',
-                  contentPadding:
-                  const EdgeInsets.symmetric(horizontal: 15, vertical: 15),
-                  border: InputBorder.none,
-                  suffixIcon: IconButton(
-                    icon: Icon(
-                      _obscurePassword
-                          ? Icons.visibility_off
-                          : Icons.visibility,
-                      color: Colors.black38,
-                    ),
-                    onPressed: () {
-                      setState(() {
-                        _obscurePassword = !_obscurePassword;
-                      });
-                    },
+            TextField(
+              controller: _pwdCtrl,
+              obscureText: _obscure,
+              decoration: InputDecoration(
+                labelText: 'New Password',
+                suffixIcon: IconButton(
+                  icon: Icon(
+                    _obscure ? Icons.visibility_off : Icons.visibility,
                   ),
-                ),
-                style: const TextStyle(
-                  color: Colors.black87,
-                  fontFamily: 'Poppins',
-                  fontSize: 15,
+                  onPressed: () => setState(() => _obscure = !_obscure),
                 ),
               ),
             ),
-
-            const SizedBox(height: 8),
-
-            const Text(
-              'Your password should at least contain an uppercase character',
-              style: TextStyle(
-                color: Colors.black38,
-                fontSize: 12,
-                fontFamily: 'Poppins',
-              ),
-            ),
-
-            const SizedBox(height: 40),
-
-            // create new pwd
-            Container(
-              width: double.infinity,
-              padding:
-              const EdgeInsets.symmetric(horizontal: 20, vertical: 17),
-              decoration: BoxDecoration(
-                color: const Color(0xD6042B55),
-                borderRadius: BorderRadius.circular(15),
-              ),
-              child: const Center(
-                child: Text(
-                  'Create New Password',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 14,
-                    fontFamily: 'Poppins',
-                    fontWeight: FontWeight.w500,
-                    letterSpacing: -0.17,
-                  ),
-                ),
-              ),
+            const SizedBox(height: 20),
+            ElevatedButton(
+              onPressed: _loading ? null : _submit,
+              child: _loading
+                  ? const SizedBox(
+                height: 16,
+                width: 16,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              )
+                  : const Text('Set New Password'),
             ),
           ],
         ),

@@ -1,12 +1,78 @@
+// user forgot the pwd
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
-class ForgotPasswordPage extends StatelessWidget {
+class ForgotPasswordPage extends StatefulWidget {
   const ForgotPasswordPage({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final TextEditingController _emailController = TextEditingController();
+  State<ForgotPasswordPage> createState() => _ForgotPasswordPageState();
+}
 
+class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
+  final TextEditingController _emailController = TextEditingController();
+  bool _isLoading = false;
+
+  @override
+  void dispose() {
+    _emailController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _sendPasswordReset() async {
+    final email = _emailController.text.trim();
+    if (email.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please enter your email.')),
+      );
+      return;
+    }
+
+    setState(() => _isLoading = true);
+    try {
+      await FirebaseAuth.instance.sendPasswordResetEmail(
+        email: email,
+        actionCodeSettings: ActionCodeSettings(
+          // Firebase Dynamic Links domain (configure in the Dynamic Link console)
+          url: 'https://trombol.page.link/qL6j',
+          handleCodeInApp: true,
+          // Android config
+          androidPackageName: 'com.example.trombol_apk',
+          androidInstallApp: true,
+          androidMinimumVersion: '23',
+          // iOS config if got iOS package installed
+          //iOSBundleId: 'com.yourcompany.yourapp',
+        ),
+      );
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Password reset email sent!')),
+      );
+      Navigator.pop(context); // go back after sending
+    } on FirebaseAuthException catch (e) {
+      if (!mounted) return;
+      String message;
+      switch (e.code) {
+        case 'invalid-email':
+          message = 'That email address is invalid.';
+          break;
+        case 'user-not-found':
+          message = 'No user found with that email.';
+          break;
+        default:
+          message = 'ERROR: ${e.message}';
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(message)),
+      );
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.transparent,
@@ -14,119 +80,108 @@ class ForgotPasswordPage extends StatelessWidget {
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.black),
           onPressed: () {
+            if (!mounted) return;
             Navigator.pop(context);
           },
         ),
       ),
-      body: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 24.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            const SizedBox(height: 40),
-            // Icon section
-            SizedBox(
-              width: 100,
-              height: 100,
-              child: Image.asset(
-                'assets/images/Logo.png', // <-- Replace this with your beach icon!
-                fit: BoxFit.contain,
-              ),
-            ),
-            const SizedBox(height: 30),
+      body: Stack(
+        children: [
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                const SizedBox(height: 40),
 
-            const Text(
-              'Forget password',
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-                fontFamily: 'Poppins',
-              ),
-            ),
-            const SizedBox(height: 10),
-
-            const Text(
-              'Enter your email or phone we will send the verification code to reset your password',
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                color: Colors.grey,
-                fontSize: 14,
-                fontFamily: 'Poppins',
-              ),
-            ),
-            const SizedBox(height: 30),
-
-            // Email input field
-            TextField(
-              controller: _emailController,
-              decoration: InputDecoration(
-                hintText: 'melissa.ux@gmail.com',
-                filled: true,
-                fillColor: Colors.white,
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 18),
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: Colors.grey.shade300),
-                ),
-                enabledBorder: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
-                  borderSide: BorderSide(color: Colors.grey.shade300),
-                ),
-              ),
-            ),
-
-            const SizedBox(height: 10),
-
-            // Reset with phone number
-            Align(
-              alignment: Alignment.centerLeft,
-              child: TextButton(
-                onPressed: () {
-                  // TODO: Reset with phone functionality
-                },
-                child: const Text(
-                  'Reset with phone number',
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: Color(0xFF0060D2),
-                    fontFamily: 'Poppins',
-                    decoration: TextDecoration.underline,
+                // Logo / Icon
+                SizedBox(
+                  width: 100,
+                  height: 100,
+                  child: Image.asset(
+                    'assets/images/Logo.png',
+                    fit: BoxFit.contain,
                   ),
                 ),
-              ),
-            ),
+                const SizedBox(height: 30),
 
-            const Spacer(),
-
-            // Request Code button
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () {
-                  // TODO: Request code functionality
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF085374),
-                  padding: const EdgeInsets.symmetric(vertical: 18),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                child: const Text(
-                  'Request code',
+                const Text(
+                  'Forget password',
                   style: TextStyle(
+                    fontSize: 22,
                     fontWeight: FontWeight.bold,
                     fontFamily: 'Poppins',
-                    fontSize: 16,
-                    color: Colors.white,
                   ),
                 ),
-              ),
-            ),
+                const SizedBox(height: 10),
 
-            const SizedBox(height: 30),
-          ],
-        ),
+                const Text(
+                  'Enter your email and we will send the verification code to reset your password',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: Colors.grey,
+                    fontSize: 14,
+                    fontFamily: 'Poppins',
+                  ),
+                ),
+                const SizedBox(height: 30),
+
+                // Email input
+                TextField(
+                  controller: _emailController,
+                  keyboardType: TextInputType.emailAddress,
+                  decoration: InputDecoration(
+                    hintText: 'you@example.com',
+                    filled: true,
+                    fillColor: Colors.white,
+                    contentPadding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 18),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: Colors.grey.shade300),
+                    ),
+                    enabledBorder: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                      borderSide: BorderSide(color: Colors.grey.shade300),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 10),
+
+                const Spacer(),
+
+                // Request code button
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: _isLoading ? null : _sendPasswordReset,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF085374),
+                      padding: const EdgeInsets.symmetric(vertical: 18),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: const Text(
+                      'Request code',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontFamily: 'Poppins',
+                        fontSize: 16,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 30),
+              ],
+            ),
+          ),
+
+          // Loading spinner
+          if (_isLoading)
+            const Center(child: CircularProgressIndicator()),
+        ],
       ),
     );
   }

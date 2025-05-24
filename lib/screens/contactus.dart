@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:trombol_apk/screens/messageverification.dart';
 
 void main() {
-  runApp(MaterialApp(
+  runApp(const MaterialApp(
     debugShowCheckedModeBanner: false,
     home: ContactUs(),
   ));
@@ -38,7 +38,7 @@ class _ContactUsState extends State<ContactUs> {
 
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (context) => Verification()),
+            MaterialPageRoute(builder: (context) => const Verification()),
           );
         }
       }
@@ -47,7 +47,7 @@ class _ContactUsState extends State<ContactUs> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(''),
+        title: const Text(''),
         backgroundColor: Colors.transparent,
         elevation: 0,
       ),
@@ -68,9 +68,9 @@ class _ContactUsState extends State<ContactUs> {
                     fit: BoxFit.contain,
                   ),
                 ),
-                SizedBox(height: 16),
+                const SizedBox(height: 16),
                 // Contact Us label
-                Center(
+                const Center(
                   child: Text(
                     'Contact Us',
                     style: TextStyle(
@@ -80,9 +80,9 @@ class _ContactUsState extends State<ContactUs> {
                     ),
                   ),
                 ),
-                SizedBox(height: 8),
+                const SizedBox(height: 8),
                 // Description
-                Center(
+                const Center(
                   child: Text(
                     'We would love to hear from you! Send us a message and we will get to you as soon as possible.',
                     style: TextStyle(
@@ -92,7 +92,7 @@ class _ContactUsState extends State<ContactUs> {
                     textAlign: TextAlign.center,
                   ),
                 ),
-                SizedBox(height: 24),
+                const SizedBox(height: 24),
                 // Name field
                 TextFormField(
                   controller: _nameController,
@@ -101,7 +101,7 @@ class _ContactUsState extends State<ContactUs> {
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    prefixIcon: Icon(Icons.person),
+                    prefixIcon: const Icon(Icons.person),
                   ),
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
@@ -110,7 +110,7 @@ class _ContactUsState extends State<ContactUs> {
                     return null;
                   },
                 ),
-                SizedBox(height: 16),
+                const SizedBox(height: 16),
                 // Email field
                 TextFormField(
                   controller: _emailController,
@@ -119,7 +119,7 @@ class _ContactUsState extends State<ContactUs> {
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    prefixIcon: Icon(Icons.email),
+                    prefixIcon: const Icon(Icons.email),
                   ),
                   keyboardType: TextInputType.emailAddress,
                   validator: (value) {
@@ -132,7 +132,7 @@ class _ContactUsState extends State<ContactUs> {
                     return null;
                   },
                 ),
-                SizedBox(height: 16),
+                const SizedBox(height: 16),
                 // Message field
                 TextFormField(
                   controller: _messageController,
@@ -141,7 +141,7 @@ class _ContactUsState extends State<ContactUs> {
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
-                    prefixIcon: Icon(Icons.message),
+                    prefixIcon: const Icon(Icons.message),
                   ),
                   maxLines: 10,
                   validator: (value) {
@@ -151,7 +151,7 @@ class _ContactUsState extends State<ContactUs> {
                     return null;
                   },
                 ),
-                SizedBox(height: 24),
+                const SizedBox(height: 24),
                 // Submit button
                 SizedBox(
                   width: double.infinity,
@@ -159,12 +159,12 @@ class _ContactUsState extends State<ContactUs> {
                   child: ElevatedButton(
                     onPressed: _submitForm,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Color(0xFF085373),
+                      backgroundColor: const Color(0xFF085373),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
                     ),
-                    child: Text(
+                    child: const Text(
                       'Send a Message',
                       style: TextStyle(fontSize: 18, color: Colors.white),
                     ),
