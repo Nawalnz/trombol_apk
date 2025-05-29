@@ -1,4 +1,6 @@
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:trombol_apk/firebase_options.dart';
 import 'package:trombol_apk/screens/homepage/explore.dart';
 import 'package:trombol_apk/screens/onboarding/onboarding1.dart';
 import 'package:trombol_apk/screens/onboarding/onboarding2.dart';
@@ -9,7 +11,9 @@ import 'package:trombol_apk/screens/seller/seller_main.dart';
 import 'package:trombol_apk/screens/seller/upload_product.dart';
 import 'screens/seller/dashboard.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   runApp(const MyApp());
 }
 
