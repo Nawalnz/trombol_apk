@@ -6,6 +6,7 @@ import 'package:trombol_apk/screens/onboarding/onboarding1.dart';
 import 'package:trombol_apk/screens/onboarding/onboarding2.dart';
 
 import 'package:trombol_apk/screens/seller/booking_list.dart';
+import 'package:trombol_apk/screens/seller/earnings.dart';
 import 'package:trombol_apk/screens/seller/product_detail.dart';
 import 'package:trombol_apk/screens/seller/seller_main.dart';
 import 'package:trombol_apk/screens/seller/upload_product.dart';
@@ -40,9 +41,20 @@ class MyApp extends StatelessWidget {
         '/seller-main': (context) => const SellerMain(),     // Seller's main page
         '/upload': (context) => const UploadProductPage(),   // Upload product page
         '/bookings': (context) => const BookingListPage(),   // View bookings
-        '/products': (context) => const ProductDetailPage(), // Product detail
-        '/home': (context) => const SellerDashboard(),       // Seller dashboard
-      },
-    );
+        '/products': (context) => const ProductDetailPage(product: {}, docId: ''), // Product detail
+        '/earnings': (context) => const EarningsPage(),
+        },
+
+        onGenerateRoute: (settings) {
+        if (settings.name == '/home') {
+        final args = settings.arguments as double;
+        return MaterialPageRoute(
+        builder: (context) => SellerDashboard(totalEarnings: args),
+        );
+        }
+        return null;
+      }
+
+      );
   }
 }

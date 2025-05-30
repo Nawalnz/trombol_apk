@@ -1,17 +1,66 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'upload_product.dart';
 
 class ProductDetailPage extends StatelessWidget {
-  const ProductDetailPage({super.key});
+  final Map<String, dynamic> product;
+  final String docId;
+
+  const ProductDetailPage({
+    super.key,
+    required this.product,
+    required this.docId,
+  });
+
+  void _editProduct(BuildContext context) {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (_) => UploadProductPage(product: product, docId: docId),
+      ),
+    );
+  }
+
+  Future<void> _deleteProduct(BuildContext context) async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete Product'),
+        content: const Text('Are you sure you want to delete this product?'),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
+          TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Delete')),
+        ],
+      ),
+    );
+
+    if (confirm == true) {
+      try {
+        final imageUrl = product['image'];
+        if (imageUrl != null && imageUrl.toString().startsWith('https://')) {
+          final ref = FirebaseStorage.instance.refFromURL(imageUrl);
+          await ref.delete();
+        }
+
+        await FirebaseFirestore.instance.collection('products').doc(docId).delete();
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Product deleted successfully')),
+        );
+
+        Navigator.pop(context);
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error deleting product: $e')),
+        );
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    final product = {
-      'name': 'Riding ATV',
-      'price': 'RM120.00',
-      'category': 'Popular Activities',
-      'description': 'Catch the sunset but make it raw, experience the unfiltered view!',
-      'image': 'assets/images/atv.png', // Updated path
-    };
+    final isNetworkImage = product['image'].toString().startsWith('http');
 
     return Scaffold(
       appBar: AppBar(
@@ -25,7 +74,9 @@ class ProductDetailPage extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Image.asset(product['image']!, fit: BoxFit.cover),
+            isNetworkImage
+                ? Image.network(product['image'], fit: BoxFit.cover)
+                : Image.asset(product['image'], fit: BoxFit.cover),
             Padding(
               padding: const EdgeInsets.all(16.0),
               child: Column(
@@ -35,14 +86,14 @@ class ProductDetailPage extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        product['name']!,
+                        product['name'],
                         style: const TextStyle(
                           fontSize: 22,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
                       Text(
-                        product['price']!,
+                        product['price'],
                         style: const TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.w500,
@@ -52,7 +103,7 @@ class ProductDetailPage extends StatelessWidget {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    product['category']!,
+                    product['category'],
                     style: TextStyle(
                       fontSize: 15,
                       color: Colors.grey.shade600,
@@ -65,7 +116,7 @@ class ProductDetailPage extends StatelessWidget {
                   ),
                   const SizedBox(height: 6),
                   Text(
-                    product['description']!,
+                    product['description'],
                     style: const TextStyle(fontSize: 15, color: Colors.black87),
                   ),
                   const SizedBox(height: 24),
@@ -81,7 +132,7 @@ class ProductDetailPage extends StatelessWidget {
                               borderRadius: BorderRadius.circular(12),
                             ),
                           ),
-                          onPressed: () {},
+                          onPressed: () => _editProduct(context),
                           child: const Text('Edit'),
                         ),
                       ),
@@ -96,7 +147,7 @@ class ProductDetailPage extends StatelessWidget {
                               borderRadius: BorderRadius.circular(12),
                             ),
                           ),
-                          onPressed: () {},
+                          onPressed: () => _deleteProduct(context),
                           child: const Text('Delete'),
                         ),
                       ),
