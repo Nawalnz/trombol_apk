@@ -1,5 +1,6 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:trombol_apk/firebase_options.dart';
 import 'package:trombol_apk/screens/homepage/explore.dart';
 import 'package:trombol_apk/screens/onboarding/onboarding1.dart';
 import 'package:trombol_apk/screens/onboarding/onboarding2.dart';
@@ -13,10 +14,9 @@ import 'screens/seller/dashboard.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp();
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   runApp(const MyApp());
 }
-
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
@@ -31,7 +31,7 @@ class MyApp extends StatelessWidget {
         useMaterial3: true,
       ),
 
-      // This will launch the onboarding page first
+      // 👇 This will launch the onboarding page first
       initialRoute: '/',
 
       routes: {

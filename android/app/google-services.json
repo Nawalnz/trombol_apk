@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "1035035035608",
+    "project_id": "trombol-db",
+    "storage_bucket": "trombol-db.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1035035035608:android:793e2d94e7d4bf15cfd4ad",
+        "android_client_info": {
+          "package_name": "com.example.trombol_apk"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCHh49RC_CmF7TgzJNCXLgaa4lOq_UdwsQ"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
