@@ -1,4 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:trombol_apk/screens/onboarding/onboarding1.dart';
 import 'dashboard.dart';
@@ -16,53 +15,31 @@ class SellerMain extends StatefulWidget {
 class _SellerMainState extends State<SellerMain> {
   int _currentIndex = 0;
 
-  double totalEarnings = 0.0;
-
-  late List<Widget> pages;
-
-  @override
-  void initState() {
-    super.initState();
-    fetchEarnings();
-  }
-
-  Future<void> fetchEarnings() async {
-    try {
-      const userId = "YOUR_SELLER_USER_ID"; // replace or fetch dynamically
-      DocumentSnapshot doc = await FirebaseFirestore.instance
-          .collection('sellers') // or your actual collection name
-          .doc(userId)
-          .get();
-
-      if (doc.exists && doc.data() != null) {
-        double fetchedEarnings = (doc['totalEarnings'] ?? 0).toDouble();
-
-        setState(() {
-          totalEarnings = fetchedEarnings;
-          // refresh pages to reflect new earnings
-          pages[0] = SellerDashboard(totalEarnings: totalEarnings);
-        });
-      }
-    } catch (e) {
-      print("Error fetching earnings: $e");
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
-    List<Widget> pages = [
-      SellerDashboard(totalEarnings: totalEarnings),
-      const UploadProductPage(),
+    // Define all your tab pages here:
+    final pages = <Widget>[
+      const SellerDashboard(),
+
+      // 1) UploadProductPage now requires a `product` map + a `docId`.
+      //    For a brand-new product, we pass an empty map + empty ID:
+      const UploadProductPage(
+        product: <String, dynamic>{},
+        docId: '',
+      ),
+
       const BookingListPage(),
+
+      // 2) ProductDetailPage uses the `product:` parameter (not `Product:`)
       const ProductDetailPage(
-        product: {
-          'name': 'Sample Product',
-          'price': 'RM100.00',
-          'category': 'Adventure',
-          'description': 'Test product details',
-          'image': 'assets/images/atv.png',
-        },
-        docId: 'docID',
+        // product: <String, dynamic>{
+        //   'prod_name': 'Sample Product',
+        //   'prod_pricePerPax': 'RM100.00',
+        //   'prod_types': 'Adventure',
+        //   'prod_desc': 'Test product details',
+        //   'image': 'assets/images/atv.png',
+        // },
+        prod_name: '', docId: '',
       ),
     ];
 
@@ -72,25 +49,21 @@ class _SellerMainState extends State<SellerMain> {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.logout, color: Colors.red),
-          onPressed: () {
-            _logout(context);
-          },
+          onPressed: () => _logout(context),
         ),
       ),
+
       body: IndexedStack(
         index: _currentIndex,
         children: pages,
       ),
+
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
         selectedItemColor: Colors.teal,
         unselectedItemColor: Colors.grey,
         currentIndex: _currentIndex,
-        onTap: (index) {
-          setState(() {
-            _currentIndex = index;
-          });
-        },
+        onTap: (i) => setState(() => _currentIndex = i),
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: "Home"),
           BottomNavigationBarItem(icon: Icon(Icons.upload), label: "Upload"),
@@ -102,22 +75,19 @@ class _SellerMainState extends State<SellerMain> {
   }
 
   void _logout(BuildContext context) {
-    showDialog(
+    showDialog<bool>(
       context: context,
-      builder: (context) => AlertDialog(
+      builder: (ctx) => AlertDialog(
         title: const Text('Logout'),
         content: const Text('Are you sure you want to logout?'),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
           TextButton(
             onPressed: () {
-              Navigator.pop(context);
+              Navigator.pop(ctx, true);
               Navigator.pushReplacement(
                 context,
-                MaterialPageRoute(builder: (context) => const Onboarding1()),
+                MaterialPageRoute(builder: (_) => const Onboarding1()),
               );
             },
             child: const Text('Logout', style: TextStyle(color: Colors.red)),

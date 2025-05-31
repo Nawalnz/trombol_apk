@@ -240,11 +240,11 @@ class _BookingPageState extends State<BookingPage> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => const PaymentPage(),
+                    builder: (context) => const PaymentPage(selectedDate: null,),
                   ),
                 );
               },
-              child: Text(
+              child: const Text(
                 'Next',
                 style: TextStyle(
                   color: Colors.white,

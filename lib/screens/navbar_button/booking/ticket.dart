@@ -45,17 +45,17 @@ class BookingConfirmedPage extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(width: 12),
-                        Expanded(
+                        const Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              const Text('Koh Rong Samloem',
+                              Text('Koh Rong Samloem',
                                   style: TextStyle(
                                       fontWeight: FontWeight.bold,
                                       fontSize: 16)),
-                              const SizedBox(height: 4),
+                              SizedBox(height: 4),
                               Row(
-                                children: const [
+                                children: [
                                   Icon(Icons.location_on,
                                       size: 14, color: Colors.grey),
                                   SizedBox(width: 4),
@@ -97,10 +97,10 @@ class BookingConfirmedPage extends StatelessWidget {
               ),
               child: Row(
                 children: [
-                  Expanded(
+                  const Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
-                      children: const [
+                      children: [
                         Text('Name'),
                         SizedBox(height: 4),
                         Text('John',

@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:trombol_apk/screens/bookplace/booking_successful.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 void main() {
   runApp(
@@ -12,6 +14,24 @@ void main() {
 
 class PaymentInputScreen extends StatelessWidget {
   const PaymentInputScreen({super.key});
+
+  Future<void> saveBooking() async {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    final bookingRef = FirebaseFirestore.instance.collection('bookings').doc();
+
+    await bookingRef.set({
+      'bookingId': bookingRef.id,
+      'userId': user.uid,
+      'tourTitle': 'Damai Lagoon Resort',
+      'productId': 'JMSlXcwBBeBRzV7Urz33',
+      'selectedDate': DateTime.now().toIso8601String(), // or pass real selectedDate
+      'guestCount': 2,
+      'createdAt': FieldValue.serverTimestamp(),
+    });
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -30,108 +50,16 @@ class PaymentInputScreen extends StatelessWidget {
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Container(
-              width: double.infinity,
-              height: 200, // realistic card-like size
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  colors: [Color(0xFF085374), Color(0xFF0A5C7C)],
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                ),
-                borderRadius: BorderRadius.circular(16),
-              ),
-              padding: const EdgeInsets.all(20),
-              child: Stack(
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Text(
-                        'MELISSA DOE',
-                        style: TextStyle(
-                          fontSize: 20,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                      ),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Account Balance',
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w400,
-                              color: Colors.white,
-                            ),
-                          ),
-                          Text(
-                            'RM536.80',
-                            style: TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ],
-                      ),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Master Card',
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w400,
-                              color: Colors.white,
-                            ),
-                          ),
-                          Text(
-                            '744 *** *** 937',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ],
-                  ),
-                  Positioned(
-                    bottom: 0,
-                    right: 0,
-                    child: Image.asset(
-                      'assets/images/mastercard.png', // Make sure you have this image in your assets folder.
-                      width: 50, // adjust as needed for the design
-                    ),
-                  ),
-                ],
-              ),
-            ),
+            const Spacer(),
 
-            const SizedBox(height: 24),
-
-            const TextField(
-              decoration: InputDecoration(
-                labelText: 'Card Number',
-                border: OutlineInputBorder(),
-              ),
-              keyboardType: TextInputType.number,
-            ),
-
-            const SizedBox(height: 16),
-
-            const TextField(
-              decoration: InputDecoration(
-                labelText: 'CVV',
-                border: OutlineInputBorder(),
-              ),
-              keyboardType: TextInputType.number,
+            const Icon(Icons.qr_code_2, size: 100, color: Color(0xFF085374)),
+            const SizedBox(height: 20),
+            const Text(
+              'Confirm that you have scanned the QR and completed the payment.',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+              textAlign: TextAlign.center,
             ),
 
             const Spacer(),
@@ -140,12 +68,12 @@ class PaymentInputScreen extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 RichText(
-                  text: TextSpan(
+                  text: const TextSpan(
                     text: 'RM1200',
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.w600,
-                      color: const Color(0xFF085374),
+                      color: Color(0xFF085374),
                     ),
                     children: [
                       TextSpan(
@@ -153,7 +81,7 @@ class PaymentInputScreen extends StatelessWidget {
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.w400,
-                          color: const Color(0xFF085374),
+                          color: Color(0xFF085374),
                         ),
                       ),
                     ],
@@ -170,13 +98,16 @@ class PaymentInputScreen extends StatelessWidget {
                       borderRadius: BorderRadius.circular(12),
                     ),
                   ),
-                  onPressed: () {
+                  onPressed: () async {
+                    await saveBooking(); // 🔥 Save booking to Firestore
+
                     Navigator.push(
                       context,
                       MaterialPageRoute(builder: (context) => const BookingSuccessScreen()),
                     );
                   },
-                  child: Text(
+
+                  child: const Text(
                     'Confirm',
                     style: TextStyle(
                       color: Colors.white,

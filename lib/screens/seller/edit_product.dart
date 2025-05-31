@@ -1,211 +1,285 @@
 import 'dart:io';
-import 'package:flutter/material.dart';
+
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart';
+import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import 'product_model.dart';
 
 class EditProductPage extends StatefulWidget {
-  final Product productToEdit;
+  final Map<String, dynamic> product;
+  final String docId;
 
-  const EditProductPage({super.key, required this.productToEdit});
+  const EditProductPage({
+    super.key,
+    required this.product,
+    required this.docId,
+  });
 
   @override
   State<EditProductPage> createState() => _EditProductPageState();
 }
 
-class _EditProductPageState extends State<EditProductPage> {
+class _EditProductPageState extends State<EditProductPage>
+    with AutomaticKeepAliveClientMixin<EditProductPage> {
   final _formKey = GlobalKey<FormState>();
-  late TextEditingController _nameController;
-  late TextEditingController _priceController;
-  late TextEditingController _descriptionController;
   String? _category;
-  String? _imagePath; // For new local image path
-  String? _existingImageUrl; // To store current image url/path
+  File? _imageFile;
+  String? _existingImageUrl;
 
-  bool _isLoading = false;
+  final _nameController = TextEditingController();
+  final _priceController = TextEditingController();
+  final _descriptionController = TextEditingController();
+  final _scrollController = ScrollController();
 
-  // Define your categories list
-  final List<String> _categories = ['Adventure', 'Relaxation', 'Nature', 'Popular Activities'];
-
+  @override
+  bool get wantKeepAlive => true;
 
   @override
   void initState() {
     super.initState();
-    // Initialize controllers and state with the product's current data
-    _nameController = TextEditingController(text: widget.productToEdit.name);
-    _priceController = TextEditingController(text: widget.productToEdit.price);
-    _descriptionController = TextEditingController(text: widget.productToEdit.description);
-    _category = widget.productToEdit.category;
-    _existingImageUrl = widget.productToEdit.image;
-    // Ensure the initial category is in the list, if not, set to null or a default
-    if (!_categories.contains(_category)) {
-      _category = null;
-    }
+    final p = widget.product;
+    _nameController.text        = p['prod_name'] ?? '';
+    // support both price field keys
+    final rawPrice = p['prod_pricePerPax'] ?? p['prod_price'];
+    _priceController.text       = rawPrice != null ? rawPrice.toString() : '';
+    _descriptionController.text = p['prod_desc'] ?? '';
+    _category                   = p['prod_types'];
+    _existingImageUrl           = p['image'];
   }
 
   Future<void> _pickImage() async {
-    final ImagePicker picker = ImagePicker();
-    final XFile? image = await picker.pickImage(source: ImageSource.gallery);
-    if (image != null) {
+    final picked = await ImagePicker().pickImage(source: ImageSource.gallery);
+    if (picked != null) {
       setState(() {
-        _imagePath = image.path;
-        _existingImageUrl = null; // Clear existing image if new one is picked
+        _imageFile = File(picked.path);
+        _existingImageUrl = null;
       });
     }
   }
 
-  Future<void> _updateProduct() async {
-    if (!_formKey.currentState!.validate()) {
-      return;
+  Future<void> _submitForm() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    final name        = _nameController.text.trim();
+    final price       = double.tryParse(_priceController.text.trim()) ?? 0.0;
+    final description = _descriptionController.text.trim();
+    String? imageUrl  = _existingImageUrl;
+
+    if (_imageFile != null) {
+      final fileName = '${DateTime.now().millisecondsSinceEpoch}_${_imageFile!.path.split('/').last}';
+      final ref = FirebaseStorage.instance
+          .ref()
+          .child('product_images/$fileName');
+      await ref.putFile(_imageFile!);
+      imageUrl = await ref.getDownloadURL();
     }
-    if (widget.productToEdit.id == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Error: Product ID is missing.')),
-      );
-      return;
-    }
 
-    setState(() { _isLoading = true; });
-
-    // Here you would handle image uploading if _imagePath is new.
-    // For simplicity, this example assumes _imagePath is an asset path or new URL.
-    // In a real app, if _imagePath is a local file path, upload to Firebase Storage first
-    // and get the downloadURL to save in Firestore.
-
-    String finalImageUrl = _existingImageUrl ?? _imagePath ?? widget.productToEdit.image;
-    // If _imagePath is a local file path (not an URL/asset path), you'd upload it here
-    // and update finalImageUrl with the download URL.
-
-    Map<String, dynamic> updatedData = {
-      'name': _nameController.text,
-      'price': _priceController.text,
-      'category': _category,
-      'description': _descriptionController.text,
-      'image': finalImageUrl, // This should be the URL after upload or existing URL/asset path
+    final products = {
+      'prod_name'        : name,
+      'prod_price'       : price,
+      'prod_types'       : _category,
+      'prod_desc'        : description,
+      'image'            : imageUrl,
+      'prod_lastUpdated' : FieldValue.serverTimestamp(),
     };
 
     try {
       await FirebaseFirestore.instance
           .collection('products')
-          .doc(widget.productToEdit.id)
-          .update(updatedData);
+          .doc(widget.docId)
+          .update(products);
 
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Product updated successfully!')),
       );
-      if (mounted) {
-        Navigator.pop(context, true); // Pop with 'true' to indicate success
-      }
+      Navigator.of(context).pop();
     } catch (e) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to update product: $e')),
+        SnackBar(content: Text('Error updating product: $e')),
       );
-    } finally {
-      if(mounted) {
-        setState(() { _isLoading = false; });
-      }
     }
   }
 
-  @override
-  void dispose() {
-    _nameController.dispose();
-    _priceController.dispose();
-    _descriptionController.dispose();
-    super.dispose();
+  Future<void> _deleteProduct() async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Delete this product?'),
+        content: const Text('This action cannot be undone.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Delete'),
+          ),
+        ],
+      ),
+    );
+    if (confirm != true) return;
+
+    try {
+      await FirebaseFirestore.instance
+          .collection('products')
+          .doc(widget.docId)
+          .delete();
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Product deleted successfully!')),
+      );
+      Navigator.of(context).pop();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error deleting product: $e')),
+      );
+    }
   }
+
+  InputDecoration _inputDecoration(String hint) => InputDecoration(
+    hintText: hint,
+    border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+    focusedBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(12),
+      borderSide: const BorderSide(color: Colors.teal, width: 2),
+    ),
+    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+  );
 
   @override
   Widget build(BuildContext context) {
-    // Your form UI will go here, similar to UploadProductPage
-    // Use _nameController, _priceController, _descriptionController, _category, _imagePath
-    // Pre-fill the fields using widget.productToEdit data
-
-    Widget imageDisplay;
-    if (_imagePath != null) {
-      imageDisplay = Image.file(File(_imagePath!), height: 200, width: double.infinity, fit: BoxFit.cover);
-    } else if (_existingImageUrl != null && _existingImageUrl!.isNotEmpty) {
-      if (_existingImageUrl!.startsWith('http')) {
-        imageDisplay = Image.network(_existingImageUrl!, height: 200, width: double.infinity, fit: BoxFit.cover);
-      } else {
-        imageDisplay = Image.asset(_existingImageUrl!, height: 200, width: double.infinity, fit: BoxFit.cover);
-      }
-    } else {
-      imageDisplay = Container(
-        height: 200,
-        width: double.infinity,
-        color: Colors.grey[300],
-        child: const Icon(Icons.camera_alt, size: 50, color: Colors.grey),
-      );
-    }
-
-
+    super.build(context);
     return Scaffold(
       appBar: AppBar(
-        title: Text('Edit ${widget.productToEdit.name}'),
         leading: const BackButton(),
+        title: const Text('Edit Product'),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Form(
           key: _formKey,
           child: ListView(
+            controller: _scrollController,
             children: [
-              // Product Name
+              const Text(
+                "Let them know your hidden gems!",
+                style: TextStyle(fontSize: 14, color: Colors.grey),
+              ),
+              const SizedBox(height: 16),
+
+              const Text("Product Name", style: TextStyle(fontWeight: FontWeight.bold)),
+              const SizedBox(height: 6),
               TextFormField(
                 controller: _nameController,
-                decoration: const InputDecoration(labelText: 'Product Name'),
-                validator: (value) => (value == null || value.isEmpty) ? 'Enter product name' : null,
+                decoration: _inputDecoration('Enter product name'),
+                validator: (v) => v == null || v.isEmpty ? 'Enter product name' : null,
               ),
+
               const SizedBox(height: 16),
-              // Price
-              TextFormField(
-                controller: _priceController,
-                decoration: const InputDecoration(labelText: 'Price (e.g., RM120.00)'),
-                keyboardType: TextInputType.text, // Or number if you parse it strictly
-                validator: (value) => (value == null || value.isEmpty) ? 'Enter price' : null,
+              Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text("Category", style: TextStyle(fontWeight: FontWeight.bold)),
+                        const SizedBox(height: 6),
+                        DropdownButtonFormField<String>(
+                          value: _category,
+                          decoration: _inputDecoration("Select category"),
+                          items: ['Adventure', 'Relaxation', 'Nature']
+                              .map((c) => DropdownMenuItem(value: c, child: Text(c)))
+                              .toList(),
+                          onChanged: (c) => setState(() => _category = c),
+                          validator: (v) => v == null ? 'Select a category' : null,
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text("Price", style: TextStyle(fontWeight: FontWeight.bold)),
+                        const SizedBox(height: 6),
+                        TextFormField(
+                          controller: _priceController,
+                          decoration: _inputDecoration('Enter price'),
+                          keyboardType: TextInputType.number,
+                          validator: (v) => v == null || v.isEmpty ? 'Enter price' : null,
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
               ),
+
               const SizedBox(height: 16),
-              // Category
-              DropdownButtonFormField<String>(
-                value: _category,
-                decoration: const InputDecoration(labelText: 'Category'),
-                items: _categories.map((String value) { // Use your _categories list
-                  return DropdownMenuItem<String>(value: value, child: Text(value));
-                }).toList(),
-                onChanged: (value) => setState(() => _category = value),
-                validator: (value) => value == null ? 'Select a category' : null,
-              ),
-              const SizedBox(height: 16),
-              // Description
+              const Text("Description", style: TextStyle(fontWeight: FontWeight.bold)),
+              const SizedBox(height: 6),
               TextFormField(
                 controller: _descriptionController,
-                decoration: const InputDecoration(labelText: 'Description'),
+                decoration: _inputDecoration('Describe your product'),
                 maxLines: 3,
-                validator: (value) => (value == null || value.isEmpty) ? 'Enter description' : null,
               ),
+
               const SizedBox(height: 16),
-              // Image Picker
-              const Text("Product Image", style: TextStyle(fontWeight: FontWeight.bold)),
+              const Text("Upload Image", style: TextStyle(fontWeight: FontWeight.bold)),
               const SizedBox(height: 8),
               GestureDetector(
                 onTap: _pickImage,
-                child: imageDisplay,
-              ),
-              const SizedBox(height: 8),
-              Center(
-                child: TextButton.icon(
-                  icon: const Icon(Icons.image_search),
-                  label: const Text('Change Image'),
-                  onPressed: _pickImage,
+                child: Container(
+                  height: 100,
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Colors.black26),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  alignment: Alignment.center,
+                  child: _imageFile != null
+                      ? Image.file(_imageFile!, height: 100, fit: BoxFit.cover)
+                      : (_existingImageUrl != null
+                      ? Image.network(_existingImageUrl!, height: 100, fit: BoxFit.cover)
+                      : const Icon(Icons.upload, size: 40)),
                 ),
               ),
+
               const SizedBox(height: 24),
-              _isLoading
-                  ? const Center(child: CircularProgressIndicator())
-                  : ElevatedButton(
-                onPressed: _updateProduct,
-                child: const Text('Save Changes'),
+              Row(
+                children: [
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: _submitForm,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0xFF004C6D),
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                      ),
+                      child: const Text('Update', style: TextStyle(color: Colors.white)),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: OutlinedButton(
+                      onPressed: _deleteProduct,
+                      style: OutlinedButton.styleFrom(
+                        side: const BorderSide(color: Color(0xFFB00020)),
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(14),
+                        ),
+                      ),
+                      child: const Text('Delete', style: TextStyle(color: Color(0xFFB00020))),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),

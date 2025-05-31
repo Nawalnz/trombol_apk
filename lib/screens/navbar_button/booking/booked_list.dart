@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
+import '../../bookplace/tour_detail.dart';
 
 class BookingsPage extends StatelessWidget {
-  const BookingsPage({Key? key}) : super(key: key);
+  const BookingsPage({super.key});
 
-  final List<Map<String, dynamic>> trips = const [
+  static const List<Map<String, dynamic>> trips = [
     {
       'title': 'Hiking at Mount Santubong',
       'location': 'Taman Negara Santubong',
@@ -11,7 +12,7 @@ class BookingsPage extends StatelessWidget {
       'duration': '2 day 1 night',
       'image': 'assets/images/santubong.jpeg',
       'rating': 4.8,
-      'reviews': 100
+      'reviews': 100,
     },
     {
       'title': 'Kampung Budaya Sarawak',
@@ -20,7 +21,7 @@ class BookingsPage extends StatelessWidget {
       'duration': 'Day Trip',
       'image': 'assets/images/kgbudaya.jpeg',
       'rating': 4.5,
-      'reviews': 360
+      'reviews': 360,
     },
     {
       'title': 'Bako National Park',
@@ -29,55 +30,99 @@ class BookingsPage extends StatelessWidget {
       'duration': 'Day Trip',
       'image': 'assets/images/bako.jpeg',
       'rating': 4.4,
-      'reviews': 119
+      'reviews': 119,
     },
   ];
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text("Bookings")),
-      body: ListView.separated(
+      appBar: AppBar(title: const Text('Bookings')),
+      body: ListView.builder(
         padding: const EdgeInsets.all(16),
         itemCount: trips.length,
-        separatorBuilder: (_, __) => const SizedBox(height: 16),
         itemBuilder: (context, index) {
           final trip = trips[index];
-          return Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child: Image.network(trip['image'] as String, width: 100, height: 80, fit: BoxFit.cover),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
+          return InkWell(
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => const TourDetailPage(tourData: {},),
+                ),
+              );
+            },
+            child: Card(
+              margin: const EdgeInsets.only(bottom: 16),
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(trip['title'] as String, style: const TextStyle(fontWeight: FontWeight.bold)),
-                    Text(trip['location'] as String),
-                    Row(
-                      children: [
-                        const Icon(Icons.star, size: 14, color: Colors.orange),
-                        const SizedBox(width: 4),
-                        Text('${trip['rating']} (${trip['reviews']} reviews)'),
-                      ],
-                    ),
-                    Text(trip['price'] as String, style: const TextStyle(color: Colors.teal)),
-                    Container(
-                      margin: const EdgeInsets.only(top: 4),
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: Colors.grey.shade200,
-                        borderRadius: BorderRadius.circular(4),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: Image.asset(
+                        trip['image'] as String,
+                        width: 100,
+                        height: 80,
+                        fit: BoxFit.cover,
                       ),
-                      child: Text(trip['duration'] as String, style: const TextStyle(fontSize: 12)),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            trip['title'] as String,
+                            style: const TextStyle(fontWeight: FontWeight.bold),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            trip['location'] as String,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 4),
+                          Row(
+                            children: [
+                              const Icon(Icons.star, size: 14, color: Colors.orange),
+                              const SizedBox(width: 4),
+                              Flexible(
+                                child: Text(
+                                  '${trip['rating']} (${trip['reviews']} reviews)',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            trip['price'] as String,
+                            style: const TextStyle(color: Colors.teal),
+                          ),
+                          const SizedBox(height: 4),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: Theme.of(context).colorScheme.surfaceContainerHighest ,
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Text(
+                              trip['duration'] as String,
+                              style: const TextStyle(fontSize: 12),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ],
                 ),
-              )
-            ],
+              ),
+            ),
           );
         },
       ),
