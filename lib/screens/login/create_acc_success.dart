@@ -3,27 +3,28 @@ import "package:trombol_apk/screens/homepage/explore.dart";
 
 void main() {
   runApp(
-    MaterialApp(
+    const MaterialApp(
         debugShowCheckedModeBanner: false,
-        home: CreateAccountScreen()),
+        home: CreateAccountSuccess()),
   );
 }
 
-class CreateAccountScreen extends StatelessWidget {
-  const CreateAccountScreen({super.key});
+class CreateAccountSuccess extends StatelessWidget {
+  const CreateAccountSuccess({super.key});
+
 
   @override
   Widget build(BuildContext context) {
     final _ = MediaQuery.of(context).size;
 
     return Container(
-      decoration: BoxDecoration(
+      decoration: const BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment(0.50, -0.00),
           end: Alignment(0.50, 1.00),
           colors: [
-            const Color(0xFF085374),
-            const Color(0x75085374),
+            Color(0xFF085374),
+            Color(0x75085374),
           ],
         ),
       ),
@@ -74,7 +75,7 @@ class CreateAccountScreen extends StatelessWidget {
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Column(
+                                    const Column(
                                       crossAxisAlignment: CrossAxisAlignment.start,
                                       children: [
                                         SizedBox(
@@ -82,7 +83,7 @@ class CreateAccountScreen extends StatelessWidget {
                                           child: Text(
                                             'Successfully',
                                             textAlign: TextAlign.center,
-                                            style: const TextStyle(
+                                            style: TextStyle(
                                               color: Colors.white,
                                               fontSize: 29,
                                               fontFamily: 'Poppins',
@@ -97,7 +98,7 @@ class CreateAccountScreen extends StatelessWidget {
                                           child: Text(
                                             'Created an Account!',
                                             textAlign: TextAlign.center,
-                                            style: const TextStyle(
+                                            style: TextStyle(
                                               color: Colors.white,
                                               fontSize: 25,
                                               fontFamily: 'Poppins',

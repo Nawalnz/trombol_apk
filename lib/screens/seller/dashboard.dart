@@ -1,18 +1,14 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:trombol_apk/screens/seller/booking_list.dart';
-import 'earnings.dart';
-
 
 class SellerDashboard extends StatelessWidget {
-  final double totalEarnings;
-  const SellerDashboard({super.key, required this.totalEarnings});
-
+  const SellerDashboard({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        body: ListView(
+      body: ListView(
         padding: const EdgeInsets.symmetric(horizontal: 16),
         children: [
           // Welcome Banner
@@ -55,18 +51,10 @@ class SellerDashboard extends StatelessWidget {
 
           const SizedBox(height: 12),
 
-          // Earnings
-          _infoCard(context, 'RM${totalEarnings.toStringAsFixed(2)}', 'Earnings', isFullWidth: true),
-
-          const SizedBox(height: 12),
-
           // Pending Approval
           // _infoCard(context, '3', 'Pending Approval', isFullWidth: true),
           //
           // const SizedBox(height: 24),
-
-          // Action Buttons
-          const SizedBox(height: 16),
         ],
       ),
     );
@@ -88,17 +76,9 @@ class SellerDashboard extends StatelessWidget {
               MaterialPageRoute(builder: (context) => const BookingListPage()),
             );
             break;
-          case 'Earnings':
-            Navigator.pushNamed(
-              context,
-              '/home',
-              arguments: totalEarnings,
-            );
-
-            break;
-          // case 'Pending Approval':
-          //   Navigator.pushNamed(context, '/pending-approval');
-          //   break;
+        // case 'Pending Approval':
+        //   Navigator.pushNamed(context, '/pending-approval');
+        //   break;
         }
       },
       child: Container(

@@ -23,16 +23,19 @@ class NotificationPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final colorScheme = Theme.of(context).colorScheme;
+    final textTheme = Theme.of(context).textTheme;
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
+        title: Text(
           "Notifications",
-          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+          style: textTheme.titleLarge?.copyWith (color: colorScheme.onSurface, fontWeight: FontWeight.bold),
         ),
-        backgroundColor: Colors.white,
+        backgroundColor: colorScheme.surface,
         elevation: 1,
         centerTitle: true,
-        iconTheme: const IconThemeData(color: Colors.black),
+        iconTheme: IconThemeData(color: colorScheme.onSurface),
       ),
       body: ListView.separated(
         padding: const EdgeInsets.all(16),
@@ -43,14 +46,15 @@ class NotificationPage extends StatelessWidget {
           return Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: colorScheme.surface,
               borderRadius: BorderRadius.circular(12),
               boxShadow: [
-                BoxShadow(
-                  color: Colors.black12,
-                  blurRadius: 4,
-                  offset: Offset(0, 2),
-                )
+                if (Theme.of(context).brightness == Brightness.light)
+                  const BoxShadow(
+                    color: Colors.black12,
+                    blurRadius: 4,
+                    offset: Offset(0, 2),
+                  )
               ],
             ),
             child: Row(
@@ -68,7 +72,7 @@ class NotificationPage extends StatelessWidget {
                     children: [
                       Text(
                         notif['title'] ?? '',
-                        style: const TextStyle(
+                        style: textTheme.titleMedium?.copyWith(
                           fontWeight: FontWeight.bold,
                           fontSize: 16,
                         ),
@@ -76,7 +80,7 @@ class NotificationPage extends StatelessWidget {
                       const SizedBox(height: 4),
                       Text(
                         notif['desc'] ?? '',
-                        style: const TextStyle(color: Colors.grey),
+                        style: textTheme.bodyMedium?.copyWith(color: textTheme.bodyMedium?.color?.withAlpha(178)),
                       ),
                       const SizedBox(height: 4),
                       Text(
@@ -107,7 +111,7 @@ class NotificationPage extends StatelessWidget {
           );
         },
       ),
-      backgroundColor: const Color(0xFFF5F5F5),
+      backgroundColor: colorScheme.surface,
     );
   }
 }

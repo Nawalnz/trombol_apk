@@ -1,0 +1,2 @@
+C:/trombol_apk-master/android/app/.cxx/Debug/z1h305o3/armeabi-v7a/CMakeFiles/edit_cache.dir
+C:/trombol_apk-master/android/app/.cxx/Debug/z1h305o3/armeabi-v7a/CMakeFiles/rebuild_cache.dir

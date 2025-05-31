@@ -25,15 +25,9 @@ class DefaultFirebaseOptions {
       case TargetPlatform.iOS:
         return ios;
       case TargetPlatform.macOS:
-        throw UnsupportedError(
-          'DefaultFirebaseOptions have not been configured for macos - '
-          'you can reconfigure this by running the FlutterFire CLI again.',
-        );
+        return macos;
       case TargetPlatform.windows:
-        throw UnsupportedError(
-          'DefaultFirebaseOptions have not been configured for windows - '
-          'you can reconfigure this by running the FlutterFire CLI again.',
-        );
+        return windows;
       case TargetPlatform.linux:
         throw UnsupportedError(
           'DefaultFirebaseOptions have not been configured for linux - '
@@ -48,12 +42,12 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions web = FirebaseOptions(
     apiKey: 'AIzaSyBvYPGoywarE1FfbIxyOtICxvghYJTjeME',
-    appId: '1:1035035035608:web:b501d383b0e214b5cfd4ad',
+    appId: '1:1035035035608:web:d28c2fea110aa2eecfd4ad',
     messagingSenderId: '1035035035608',
     projectId: 'trombol-db',
     authDomain: 'trombol-db.firebaseapp.com',
     storageBucket: 'trombol-db.firebasestorage.app',
-    measurementId: 'G-87ECELM62H',
+    measurementId: 'G-82CDY7KWGP',
   );
 
   static const FirebaseOptions android = FirebaseOptions(
@@ -66,10 +60,29 @@ class DefaultFirebaseOptions {
 
   static const FirebaseOptions ios = FirebaseOptions(
     apiKey: 'AIzaSyDT8xPl1r0dtzXqSMbAa0OmX1XxgckZBj8',
-    appId: '1:1035035035608:ios:bd39026f8826cd7fcfd4ad',
+    appId: '1:1035035035608:ios:92119c7a10d7b774cfd4ad',
     messagingSenderId: '1035035035608',
     projectId: 'trombol-db',
     storageBucket: 'trombol-db.firebasestorage.app',
     iosBundleId: 'com.example.trombolApk',
+  );
+
+  static const FirebaseOptions macos = FirebaseOptions(
+    apiKey: 'AIzaSyDT8xPl1r0dtzXqSMbAa0OmX1XxgckZBj8',
+    appId: '1:1035035035608:ios:92119c7a10d7b774cfd4ad',
+    messagingSenderId: '1035035035608',
+    projectId: 'trombol-db',
+    storageBucket: 'trombol-db.firebasestorage.app',
+    iosBundleId: 'com.example.trombolApk',
+  );
+
+  static const FirebaseOptions windows = FirebaseOptions(
+    apiKey: 'AIzaSyBvYPGoywarE1FfbIxyOtICxvghYJTjeME',
+    appId: '1:1035035035608:web:412224c01f0aeea3cfd4ad',
+    messagingSenderId: '1035035035608',
+    projectId: 'trombol-db',
+    authDomain: 'trombol-db.firebaseapp.com',
+    storageBucket: 'trombol-db.firebasestorage.app',
+    measurementId: 'G-WD8MKBFH1B',
   );
 }

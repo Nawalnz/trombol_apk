@@ -6,151 +6,128 @@ class TourListPage extends StatelessWidget {
 
   const TourListPage({super.key, required this.searchKeyword});
 
+  static const List<Map<String, dynamic>> trips = [
+    {
+      'title': 'Hiking at Mount Santubong',
+      'location': 'Taman Negara Santubong',
+      'price': 'from RM150/person',
+      'duration': '2 day 1 night',
+      'image': 'assets/images/santubong.jpeg',
+      'rating': 4.8,
+      'reviews': 100,
+    },
+    {
+      'title': 'Kampung Budaya Sarawak',
+      'location': 'Pantai Damai Santubong, Kampung Budaya Sarawak',
+      'price': 'from RM100/person',
+      'duration': 'Day Trip',
+      'image': 'assets/images/kgbudaya.jpeg',
+      'rating': 4.5,
+      'reviews': 360,
+    },
+    {
+      'title': 'Bako National Park',
+      'location': 'Bako National Park',
+      'price': 'from RM75/person',
+      'duration': 'Day Trip',
+      'image': 'assets/images/bako.jpeg',
+      'rating': 4.4,
+      'reviews': 119,
+    },
+  ];
+
   @override
   Widget build(BuildContext context) {
-    // Dummy tours
-    final List<Map<String, dynamic>> dummyTours = [
-      {
-        'title': 'Borneo Happy Farm',
-        'location': 'Kuching, Sarawak',
-        'price': 'RM30+',
-        'duration': '1 day',
-        'image': 'assets/images/borneo_happy_farm.png',
-      },
-      {
-        'title': '2 day 1 night Kuching Tour',
-        'location': 'Kuching, Sarawak',
-        'price': 'RM350',
-        'duration': '2 day 1 night',
-        'image': 'assets/images/kch_waterfront.png',
-      },
-      {
-        'title': '1-Day Cultural Museum Tour',
-        'location': 'Kuching, Sarawak',
-        'price': 'RM20+',
-        'duration': '1 day',
-        'image': 'assets/images/cultural_museum.png',
-      },
-    ];
-
-    // Filtering matched tours
-    final List<Map<String, dynamic>> matchedTours = dummyTours.where((tour) {
-      return tour['title'].toLowerCase().contains(searchKeyword.toLowerCase()) ||
-          tour['location'].toLowerCase().contains(searchKeyword.toLowerCase());
-    }).toList();
-
-    // int totalResults = matchedTours.length; // <-- Future real database data
-
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Place name "$searchKeyword"'),
-        centerTitle: true,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.pop(context),
-        ),
-      ),
-      body: Column(
-        children: [
-          Expanded(
-            child: ListView.builder(
-              itemCount: matchedTours.length,
-              itemBuilder: (context, index) {
-                final tour = matchedTours[index];
-                return GestureDetector(
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => TourDetailPage(tourData: tour),
+      appBar: AppBar(title: const Text('Bookings')),
+      body: ListView.builder(
+        padding: const EdgeInsets.all(16),
+        itemCount: trips.length,
+        itemBuilder: (context, index) {
+          final trip = trips[index];
+          return InkWell(
+            onTap: () {
+              // pass the real map into tourData
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => TourDetailPage(tourData: trip),
+                ),
+              );
+            },
+            child: Card(
+              margin: const EdgeInsets.only(bottom: 16),
+              child: Padding(
+                padding: const EdgeInsets.all(12),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(8),
+                      child: Image.asset(
+                        trip['image'] as String,
+                        width: 100,
+                        height: 80,
+                        fit: BoxFit.cover,
                       ),
-                    );
-                  },
-                  child: Card(
-                    margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        ClipRRect(
-                          borderRadius: BorderRadius.circular(12),
-                          child: Image.asset(
-                            tour['image'],
-                            height: 100,
-                            width: 100,
-                            fit: BoxFit.cover,
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            trip['title'] as String,
+                            style: const TextStyle(fontWeight: FontWeight.bold),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
                           ),
-                        ),
-                        Expanded(
-                          child: Padding(
-                            padding: const EdgeInsets.all(8),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  tour['title'],
-                                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                          const SizedBox(height: 4),
+                          Text(
+                            trip['location'] as String,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 4),
+                          Row(
+                            children: [
+                              const Icon(Icons.star, size: 14, color: Colors.orange),
+                              const SizedBox(width: 4),
+                              Flexible(
+                                child: Text(
+                                  '${trip['rating']} (${trip['reviews']} reviews)',
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
                                 ),
-                                const SizedBox(height: 4),
-                                Row(
-                                  children: const [
-                                    Icon(Icons.star, size: 14, color: Colors.orange),
-                                    Icon(Icons.star, size: 14, color: Colors.orange),
-                                    Icon(Icons.star, size: 14, color: Colors.orange),
-                                    Icon(Icons.star, size: 14, color: Colors.orange),
-                                    Icon(Icons.star_border, size: 14, color: Colors.orange),
-                                  ],
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  tour['location'],
-                                  style: const TextStyle(fontSize: 12, color: Colors.grey),
-                                ),
-                                const SizedBox(height: 6),
-                                Text(
-                                  'from ${tour['price']}/person',
-                                  style: const TextStyle(fontWeight: FontWeight.bold),
-                                ),
-                                const SizedBox(height: 6),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-                                  decoration: BoxDecoration(
-                                    color: Colors.grey.shade200,
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: Text(
-                                    tour['duration'],
-                                    style: const TextStyle(fontSize: 12),
-                                  ),
-                                ),
-                              ],
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            trip['price'] as String,
+                            style: const TextStyle(color: Colors.teal),
+                          ),
+                          const SizedBox(height: 4),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                            decoration: BoxDecoration(
+                              color: Colors.grey.shade200,
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Text(
+                              trip['duration'] as String,
+                              style: const TextStyle(fontSize: 12),
                             ),
                           ),
-                        )
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
-                );
-              },
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: ElevatedButton(
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.white,
-                side: const BorderSide(color: Colors.black),
-                foregroundColor: Colors.black,
-                minimumSize: const Size(double.infinity, 50),
+                  ],
+                ),
               ),
-              onPressed: () {
-                // TODO: In future, load more data from database
-              },
-              child: Text('Show +${matchedTours.length + 15} more available'),
-              // Future dynamic from database: 'Show +${totalResults} more available',
             ),
-          ),
-        ],
+          );
+        },
       ),
     );
   }

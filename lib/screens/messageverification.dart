@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:trombol_apk/screens/onboarding/onboarding1.dart';
 
 void main() {
-  runApp(MaterialApp(
+  runApp(const MaterialApp(
     debugShowCheckedModeBanner: false,
     home: Verification(),
   ));
@@ -20,7 +20,7 @@ class _VerificationState extends State<Verification> {
   Widget build(BuildContext context) {
     return Scaffold(
         body: Container(
-        decoration: BoxDecoration(
+        decoration: const BoxDecoration(
         gradient: LinearGradient(
         colors: [
           Color(0xFF085374),
@@ -42,7 +42,7 @@ class _VerificationState extends State<Verification> {
                 mainAxisSize: MainAxisSize.min,
                   children: [
                     ColorFiltered(
-                      colorFilter: ColorFilter.mode(
+                      colorFilter: const ColorFilter.mode(
                         Color(0xFFD5ECFF),
                       BlendMode.srcATop,
                    ),
@@ -54,8 +54,8 @@ class _VerificationState extends State<Verification> {
               ),
            ),
 
-        SizedBox(height: 32),
-          Text(
+        const SizedBox(height: 32),
+          const Text(
              'Message Sent!',
               style: TextStyle(
                 fontSize: 32,
@@ -65,8 +65,8 @@ class _VerificationState extends State<Verification> {
           textAlign: TextAlign.center,
         ),
 
-        SizedBox(height: 14),
-          Text(
+        const SizedBox(height: 14),
+          const Text(
               'Thank you for reaching out to us.\nWe have received your message and will get back to you shortly.',
               style: TextStyle(
               fontSize: 18,
@@ -83,8 +83,8 @@ class _VerificationState extends State<Verification> {
             width: double.infinity,
             height: 57,
               child: ElevatedButton.icon(
-                icon: Icon(Icons.home, color: Colors.black),
-                label: Text(
+                icon: const Icon(Icons.home, color: Colors.black),
+                label: const Text(
                   'Back to Home',
                     style: TextStyle(fontSize: 18, color: Colors.black),
                   ),
@@ -96,14 +96,14 @@ class _VerificationState extends State<Verification> {
             ),
                 onPressed: () {
                   Navigator.of(context).pushAndRemoveUntil(
-                   MaterialPageRoute(builder: (context) => Onboarding1()),
+                   MaterialPageRoute(builder: (context) => const Onboarding1()),
                       (route) => false,
                     );
                   },
                 ),
               ),
 
-            SizedBox(height: 24), // Optional spacing from the bottom
+            const SizedBox(height: 24), // Optional spacing from the bottom
             ],
           ),
         ),

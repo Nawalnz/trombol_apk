@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:trombol_apk/screens/bookplace/detail_booking.dart'; // your next page
+import 'package:trombol_apk/screens/bookplace/detail_booking.dart';
+import 'package:trombol_apk/screens/bookplace/payment.dart';
 
 class BookingCalendar extends StatefulWidget {
   const BookingCalendar({super.key});
@@ -9,36 +10,38 @@ class BookingCalendar extends StatefulWidget {
 }
 
 class _BookingCalendarState extends State<BookingCalendar> {
-  DateTime? selectedDate; // <-- To temporarily store selected date
+  DateTime? selectedDate;
 
-  // Simulate unavailable dates (normally fetched from database)
   final List<DateTime> unavailableDates = [
     DateTime(2025, 4, 11),
     DateTime(2025, 4, 12),
-    // Future: Fetch from Firestore or other DB
-    // Example pseudo-code:
-    // unavailableDates = await FirebaseFirestore.instance.collection('bookings').get()
   ];
 
   bool isDateUnavailable(DateTime date) {
     return unavailableDates.any((d) =>
-    d.year == date.year && d.month == date.month && d.day == date.day
-    );
+    d.year == date.year &&
+        d.month == date.month &&
+        d.day == date.day);
   }
 
   void handleDateTap(DateTime date) {
-    if (date.isBefore(DateTime.now())) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+
+    if (date.isBefore(today)) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("You cannot select a past date")),
       );
       return;
     }
+
     if (isDateUnavailable(date)) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Booking full on selected date")),
       );
       return;
     }
+
     setState(() {
       selectedDate = date;
     });
@@ -57,13 +60,11 @@ class _BookingCalendarState extends State<BookingCalendar> {
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () {
-            Navigator.pop(context);
-          },
+          onPressed: () => Navigator.pop(context),
         ),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
+        padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -75,22 +76,24 @@ class _BookingCalendarState extends State<BookingCalendar> {
                 fontFamily: 'Poppins',
               ),
             ),
-            const SizedBox(height: 16),
-            CalendarMonth(
-              month: 'April 2025',
-              startDay: DateTime(2025, 4, 1),
-              selectedDate: selectedDate,
-              onDateTap: handleDateTap,
-              isUnavailable: isDateUnavailable,
-            ),
-            const SizedBox(height: 24),
-            CalendarMonth(
-              month: 'May 2025',
-              startDay: DateTime(2025, 5, 1),
-              selectedDate: selectedDate,
-              onDateTap: handleDateTap,
-              isUnavailable: isDateUnavailable,
-            ),
+            ...List.generate(36, (index) {
+              final now = DateTime.now();
+              final year = now.year + ((now.month + index - 1) ~/ 12);
+              final month = (now.month + index - 1) % 12 + 1;
+              final startDay = DateTime(year, month, 1);
+              final monthLabel = "${_getMonthName(month)} $year";
+
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 32.0),
+                child: CalendarMonth(
+                  month: monthLabel,
+                  startDay: startDay,
+                  selectedDate: selectedDate,
+                  onDateTap: handleDateTap,
+                  isUnavailable: isDateUnavailable,
+                ),
+              );
+            }),
           ],
         ),
       ),
@@ -100,9 +103,7 @@ class _BookingCalendarState extends State<BookingCalendar> {
           children: [
             Expanded(
               child: ElevatedButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                },
+                onPressed: () => Navigator.pop(context),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.grey[300],
                   foregroundColor: Colors.black,
@@ -111,10 +112,7 @@ class _BookingCalendarState extends State<BookingCalendar> {
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-                child: const Text(
-                  "Back",
-                  style: TextStyle(fontFamily: 'Poppins'),
-                ),
+                child: const Text("Back", style: TextStyle(fontFamily: 'Poppins')),
               ),
             ),
             const SizedBox(width: 16),
@@ -123,11 +121,11 @@ class _BookingCalendarState extends State<BookingCalendar> {
                 onPressed: selectedDate == null
                     ? null
                     : () {
-                  // Proceed and pass the selected date
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) => BookingPage(selectedDate: selectedDate!),
+                      builder: (context) =>
+                          PaymentPage(selectedDate: selectedDate!),
                     ),
                   );
                 },
@@ -139,10 +137,7 @@ class _BookingCalendarState extends State<BookingCalendar> {
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-                child: const Text(
-                  "Next",
-                  style: TextStyle(fontFamily: 'Poppins'),
-                ),
+                child: const Text("Next", style: TextStyle(fontFamily: 'Poppins')),
               ),
             ),
           ],
@@ -150,6 +145,14 @@ class _BookingCalendarState extends State<BookingCalendar> {
       ),
     );
   }
+}
+
+String _getMonthName(int month) {
+  const months = [
+    'January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December'
+  ];
+  return months[month - 1];
 }
 
 class CalendarMonth extends StatelessWidget {
@@ -173,6 +176,8 @@ class CalendarMonth extends StatelessWidget {
     final firstDayOfMonth = DateTime(startDay.year, startDay.month, 1);
     final daysInMonth = DateUtils.getDaysInMonth(startDay.year, startDay.month);
     final weekdayOffset = firstDayOfMonth.weekday % 7;
+
+    final totalItems = daysInMonth + weekdayOffset;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -203,60 +208,69 @@ class CalendarMonth extends StatelessWidget {
           ))
               .toList(),
         ),
-        const SizedBox(height: 8),
-        SizedBox(
-          height: 220,
-          child: GridView.builder(
-            physics: const NeverScrollableScrollPhysics(),
-            shrinkWrap: true,
-            gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-              crossAxisCount: 7,
-              crossAxisSpacing: 4,
-              mainAxisSpacing: 4,
-            ),
-            itemCount: daysInMonth + weekdayOffset,
-            itemBuilder: (context, index) {
-              if (index < weekdayOffset) {
-                return const SizedBox();
-              }
-              final day = index - weekdayOffset + 1;
-              final currentDate = DateTime(startDay.year, startDay.month, day);
+        const SizedBox(height: 4),
+        GridView.builder(
+          physics: const NeverScrollableScrollPhysics(),
+          shrinkWrap: true,
+          itemCount: totalItems,
+          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: 7,
+            crossAxisSpacing: 4,
+            mainAxisSpacing: 4,
+            childAspectRatio: 1, // 👈 This makes cells square
+          ),
+          itemBuilder: (context, index) {
+            if (index < weekdayOffset) return const SizedBox();
+            final day = index - weekdayOffset + 1;
+            final currentDate =
+            DateTime(startDay.year, startDay.month, day);
 
-              bool isSelected = selectedDate?.year == currentDate.year &&
-                  selectedDate?.month == currentDate.month &&
-                  selectedDate?.day == currentDate.day;
+            final isSelected = selectedDate?.year == currentDate.year &&
+                selectedDate?.month == currentDate.month &&
+                selectedDate?.day == currentDate.day;
 
-              bool unavailable = isUnavailable(currentDate);
+            final unavailable = isUnavailable(currentDate);
 
-              return GestureDetector(
+            final isDark = Theme.of(context).brightness == Brightness.dark;
+
+            Color backgroundColor;
+            Color textColor;
+
+            if (isSelected) {
+              backgroundColor = const Color(0xFF085374); // your selected color
+              textColor = Colors.white;
+            } else if (unavailable) {
+              backgroundColor = isDark ? Colors.grey[800]! : Colors.grey[300]!;
+              textColor = Colors.grey;
+            } else {
+              backgroundColor = Colors.transparent;
+              textColor = isDark ? Colors.white : Colors.black;
+            }
+
+            return Material(
+              color: Colors.transparent,
+              child: InkWell(
                 onTap: () => onDateTap(currentDate),
+                borderRadius: BorderRadius.circular(8),
                 child: Container(
                   decoration: BoxDecoration(
-                    color: isSelected
-                        ? const Color(0xFF085374)
-                        : unavailable
-                        ? Colors.grey[300]
-                        : Colors.transparent,
+                    color: backgroundColor,
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Center(
                     child: Text(
                       "$day",
                       style: TextStyle(
-                        color: unavailable
-                            ? Colors.grey
-                            : isSelected
-                            ? Colors.white
-                            : Colors.black,
+                        color: textColor,
                         fontFamily: 'Poppins',
                         fontSize: 12,
                       ),
                     ),
                   ),
                 ),
-              );
-            },
-          ),
+              ),
+            );
+          },
         ),
       ],
     );

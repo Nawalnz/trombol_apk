@@ -1,20 +1,25 @@
 import 'package:flutter/material.dart';
-import 'package:trombol_apk/screens/onboarding/onboarding1.dart'; // Import your onboarding page
+// import "package:firebase_auth/firebase_auth.dart";
+import 'package:trombol_apk/screens/onboarding/onboarding1.dart';
+import 'package:trombol_apk/theme_notifier.dart'; // Import your onboarding page
+import "package:provider/provider.dart";
 
 class ProfilePage extends StatelessWidget {
   const ProfilePage({super.key});
 
   @override
   Widget build(BuildContext context) {
+    //final User? user = FirebaseAuth.instance.currentUser;
+
     return Scaffold(
-      backgroundColor: const Color(0xFFF7F7F7), // Slightly off-white background
+      backgroundColor: Theme.of(context).colorScheme.surface, // Slightly off-white background
       appBar: AppBar(
-        backgroundColor: Colors.white,
+        backgroundColor: Theme.of(context).colorScheme.surface,
         elevation: 0,
-        title: const Text("Profile", style: TextStyle(color: Colors.black)),
+        title: Text("Profile", style: TextStyle(color: Theme.of(context).colorScheme.onSurface)),
         centerTitle: true,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
+          icon: Icon(Icons.arrow_back, color: Theme.of(context).colorScheme.onSurface),
           onPressed: () {
             Navigator.pop(context);
           },
@@ -33,15 +38,15 @@ class ProfilePage extends StatelessWidget {
               const SizedBox(width: 12),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                children: const [
+                children: [
                   Text(
                     "Melissa Doe",
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Theme.of(context).textTheme.bodyLarge?.color),
                   ),
-                  SizedBox(height: 4),
+                  const SizedBox(height: 4),
                   Text(
                     "Mars, Solar System",
-                    style: TextStyle(color: Colors.grey, fontSize: 14),
+                    style: TextStyle(fontSize: 14, color: Theme.of(context).textTheme.bodySmall?.color),
                   ),
                 ],
               ),
@@ -56,7 +61,6 @@ class ProfilePage extends StatelessWidget {
             child: Text("Bookings", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
           ),
           _buildSimpleListTile("My Bookings"),
-          _buildSimpleListTile("Wishlist"),
 
           const SizedBox(height: 24),
           const Divider(),
@@ -67,8 +71,19 @@ class ProfilePage extends StatelessWidget {
             child: Text("Account Settings", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
           ),
           _buildSettingsTile(Icons.person, "Edit Profile"),
-          _buildSettingsTile(Icons.language, "Change Language"),
-          _buildSettingsTile(Icons.dark_mode, "Color Mode"),
+          //_buildSettingsTile(Icons.dark_mode, "Color Mode"),
+          Consumer<ThemeNotifier>(
+            builder: (context, themeNotifier, child){
+              return SwitchListTile(
+                  secondary: const Icon(Icons.dark_mode),
+                  title: const Text ("Colour Mode"),
+                  value: themeNotifier.isDarkMode,
+                  onChanged: (value){
+                    themeNotifier.toggleTheme(value);
+                  },
+              );
+            },
+          ),
 
           const SizedBox(height: 24),
           const Divider(),
