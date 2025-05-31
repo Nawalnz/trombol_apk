@@ -4,7 +4,7 @@ import 'package:trombol_apk/screens/homepage/explore.dart';
 import 'package:trombol_apk/screens/login/login_user.dart';
 
 void main() {
-  runApp(const MaterialApp(
+  runApp(MaterialApp(
     debugShowCheckedModeBanner: false,
     home: HomePage(),
   ));
@@ -22,15 +22,15 @@ class _HomePageState extends State<HomePage> {
   int _currentPage = 0;
 
   final List<Widget> _pages = [
-    const Center(child: Text('Page 1', style: TextStyle(fontSize: 24, color: Colors.transparent))),
-    const Center(child: Text('Page 2', style: TextStyle(fontSize: 24, color: Colors.transparent))),
+    Center(child: Text('Page 1', style: TextStyle(fontSize: 24, color: Colors.transparent))),
+    Center(child: Text('Page 2', style: TextStyle(fontSize: 24, color: Colors.transparent))),
   ];
 
   @override
   Widget build(BuildContext context) {
     return SizedBox.expand(
       child: Container(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           image: DecorationImage(
             image: AssetImage('assets/images/SplashBackground.jpg'),
             fit: BoxFit.cover,
@@ -43,11 +43,11 @@ class _HomePageState extends State<HomePage> {
           appBar: AppBar(
             backgroundColor: Colors.transparent,
             elevation: 0,
-            title: const Text(''),
+            title: Text(''),
             actions: [
               Builder(
                 builder: (context) => IconButton(
-                  icon: const Icon(Icons.menu, color: Colors.white),
+                  icon: Icon(Icons.menu, color: Colors.white),
                   onPressed: () {
                     Scaffold.of(context).openEndDrawer();
                   },
@@ -60,12 +60,12 @@ class _HomePageState extends State<HomePage> {
               padding: EdgeInsets.zero,
               children: <Widget>[
                 DrawerHeader(
-                  decoration: const BoxDecoration(color: Colors.transparent),
+                  decoration: BoxDecoration(color: Colors.transparent),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Container(
-                        margin: const EdgeInsets.only(bottom: 10),
+                        margin: EdgeInsets.only(bottom: 10),
                         child: Image.asset(
                           'assets/images/Logo.png',
                           width: 250,
@@ -76,23 +76,23 @@ class _HomePageState extends State<HomePage> {
                     ],
                   ),
                 ),
-                const SizedBox(height: 20),
+                // SizedBox(height: 20),
+                // ListTile(
+                //   leading: Icon(Icons.travel_explore, size: 30.0),
+                //   title: Text('Explore Beach', style: TextStyle(fontSize: 20.0)),
+                //   onTap: () {
+                //     Navigator.pop(context);
+                //   },
+                // ),
+                SizedBox(height: 20),
                 ListTile(
-                  leading: const Icon(Icons.travel_explore, size: 30.0),
-                  title: const Text('Explore Beach', style: TextStyle(fontSize: 20.0)),
-                  onTap: () {
-                    Navigator.pop(context);
-                  },
-                ),
-                const SizedBox(height: 20),
-                ListTile(
-                  leading: const Icon(Icons.connect_without_contact_rounded, size: 30.0),
-                  title: const Text('Contact Us', style: TextStyle(fontSize: 20.0)),
+                  leading: Icon(Icons.connect_without_contact_rounded, size: 30.0),
+                  title: Text('Contact Us', style: TextStyle(fontSize: 20.0)),
                   onTap: () {
                     Navigator.pop(context);
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => const ContactUs()),
+                      MaterialPageRoute(builder: (context) => ContactUs()),
                     );
                   },
                 ),
@@ -115,10 +115,10 @@ class _HomePageState extends State<HomePage> {
                       children: _pages,
                     ),
                   ),
-                const Spacer(),
+                Spacer(),
 
                   ColorFiltered(
-                    colorFilter: const ColorFilter.mode(
+                    colorFilter: ColorFilter.mode(
                       Colors.white, // Change to your desired color and opacity
                       BlendMode.srcATop,
                     ),
@@ -129,29 +129,29 @@ class _HomePageState extends State<HomePage> {
                       fit: BoxFit.cover,
                     ),
                   ),
-                  const SizedBox(height: 32), // Optional: space from the bottom
+                  SizedBox(height: 32), // Optional: space from the bottom
 
                   SizedBox(
                     width: double.infinity,
                     height: 56,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (context) => const ExploreToday()),
-                        );
-                      },
-
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF085373),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      child: const Text('Explore Beach', style: TextStyle(fontSize: 18, color: Colors.white)),
-                    ),
+                    // child: ElevatedButton(
+                    //   onPressed: () {
+                    //     Navigator.push(
+                    //       context,
+                    //       MaterialPageRoute(builder: (context) => const ExploreToday()),
+                    //     );
+                    //   },
+                    //
+                    // //   style: ElevatedButton.styleFrom(
+                    // //     backgroundColor: Color(0xFF085373),
+                    // //     shape: RoundedRectangleBorder(
+                    // //       borderRadius: BorderRadius.circular(12),
+                    // //     ),
+                    // //   ),
+                    // //   child: Text('Explore Beach', style: TextStyle(fontSize: 18, color: Colors.white)),
+                    // ),
                   ),
-                  const SizedBox(height: 16),
+                  // SizedBox(height: 16),
                   SizedBox(
                     width: double.infinity,
                     height: 56,
@@ -163,26 +163,26 @@ class _HomePageState extends State<HomePage> {
                         );
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF085373),
+                        backgroundColor: Color(0xFF085373),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
                       ),
-                      child: const Text('Log In', style: TextStyle(fontSize: 18, color: Colors.white)),
+                      child: Text('Log In', style: TextStyle(fontSize: 18, color: Colors.white)),
                     ),
                   ),
-                  const SizedBox(height: 24),
+                  SizedBox(height: 24),
                   // Rectangle page slider at the very bottom
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: List.generate(_pages.length, (index) {
                       return AnimatedContainer(
-                        duration: const Duration(milliseconds: 300),
-                        margin: const EdgeInsets.symmetric(horizontal: 6),
+                        duration: Duration(milliseconds: 300),
+                        margin: EdgeInsets.symmetric(horizontal: 6),
                         width: _currentPage == index ? 32 : 16,
                         height: 8,
                         decoration: BoxDecoration(
-                          color: _currentPage == index ? const Color(0xFF085373) : Colors.white54,
+                          color: _currentPage == index ? Color(0xFF085373) : Colors.white54,
                           borderRadius: BorderRadius.circular(4),
                         ),
                       );
