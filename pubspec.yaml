@@ -35,19 +35,17 @@ dependencies:
   barcode_widget: ^2.0.1
   qr_flutter: ^4.0.0
 
-  firebase_core: ^3.13.1
-  firebase_auth: ^5.5.0
-  cloud_firestore: ^5.6.8
-  firebase_messaging: ^15.2.0
-  firebase_storage: ^12.4.6
-
-  image_picker: ^1.1.2
-  file_picker: ^10.1.9
-  path: ^1.9.1
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.6
+  # firebase dependencies
+  firebase_core: ^3.13.0 # firebase db version
+  firebase_auth: ^5.5.4
+  cloud_firestore: ^5.6.8
+  firebase_storage: ^12.4.6
+  image_picker: ^1.1.2
+  provider: ^6.0.5
 
 dev_dependencies:
   flutter_launcher_icons: ^0.14.3  # or latest
@@ -91,8 +89,14 @@ flutter:
     - assets/images/qr-code.png
     - assets/images/trombol_logo.png
     - assets/images/trombol_logo_dark.png
+    - assets/images/santubong.jpeg
+    - assets/images/kgbudaya.jpeg
+    - assets/images/bako.jpeg
+    - assets/images/your_qr_image.png
+    # - assets/image/default_profile.jpg
 
-      # The following line ensures that the Material Icons font is
+
+    # The following line ensures that the Material Icons font is
   # included with your application, so that you can use the icons in
   # the material Icons class.
   uses-material-design: true
