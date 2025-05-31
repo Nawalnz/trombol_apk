@@ -4,7 +4,7 @@ import 'package:trombol_apk/screens/homepage/explore.dart';
 import 'package:trombol_apk/screens/login/login_user.dart';
 
 void main() {
-  runApp(MaterialApp(
+  runApp(const MaterialApp(
     debugShowCheckedModeBanner: false,
     home: HomePage(),
   ));
@@ -22,15 +22,15 @@ class _HomePageState extends State<HomePage> {
   int _currentPage = 0;
 
   final List<Widget> _pages = [
-    Center(child: Text('Page 1', style: TextStyle(fontSize: 24, color: Colors.transparent))),
-    Center(child: Text('Page 2', style: TextStyle(fontSize: 24, color: Colors.transparent))),
+    const Center(child: Text('Page 1', style: TextStyle(fontSize: 24, color: Colors.transparent))),
+    const Center(child: Text('Page 2', style: TextStyle(fontSize: 24, color: Colors.transparent))),
   ];
 
   @override
   Widget build(BuildContext context) {
     return SizedBox.expand(
       child: Container(
-        decoration: BoxDecoration(
+        decoration: const BoxDecoration(
           image: DecorationImage(
             image: AssetImage('assets/images/SplashBackground.jpg'),
             fit: BoxFit.cover,
@@ -43,11 +43,11 @@ class _HomePageState extends State<HomePage> {
           appBar: AppBar(
             backgroundColor: Colors.transparent,
             elevation: 0,
-            title: Text(''),
+            title: const Text(''),
             actions: [
               Builder(
                 builder: (context) => IconButton(
-                  icon: Icon(Icons.menu, color: Colors.white),
+                  icon: const Icon(Icons.menu, color: Colors.white),
                   onPressed: () {
                     Scaffold.of(context).openEndDrawer();
                   },
@@ -60,12 +60,12 @@ class _HomePageState extends State<HomePage> {
               padding: EdgeInsets.zero,
               children: <Widget>[
                 DrawerHeader(
-                  decoration: BoxDecoration(color: Colors.transparent),
+                  decoration: const BoxDecoration(color: Colors.transparent),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       Container(
-                        margin: EdgeInsets.only(bottom: 10),
+                        margin: const EdgeInsets.only(bottom: 10),
                         child: Image.asset(
                           'assets/images/Logo.png',
                           width: 250,
@@ -86,13 +86,13 @@ class _HomePageState extends State<HomePage> {
                 // ),
                 SizedBox(height: 20),
                 ListTile(
-                  leading: Icon(Icons.connect_without_contact_rounded, size: 30.0),
-                  title: Text('Contact Us', style: TextStyle(fontSize: 20.0)),
+                  leading: const Icon(Icons.connect_without_contact_rounded, size: 30.0),
+                  title: const Text('Contact Us', style: TextStyle(fontSize: 20.0)),
                   onTap: () {
                     Navigator.pop(context);
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => ContactUs()),
+                      MaterialPageRoute(builder: (context) => const ContactUs()),
                     );
                   },
                 ),
@@ -115,10 +115,10 @@ class _HomePageState extends State<HomePage> {
                       children: _pages,
                     ),
                   ),
-                Spacer(),
+                const Spacer(),
 
                   ColorFiltered(
-                    colorFilter: ColorFilter.mode(
+                    colorFilter: const ColorFilter.mode(
                       Colors.white, // Change to your desired color and opacity
                       BlendMode.srcATop,
                     ),
@@ -129,7 +129,7 @@ class _HomePageState extends State<HomePage> {
                       fit: BoxFit.cover,
                     ),
                   ),
-                  SizedBox(height: 32), // Optional: space from the bottom
+                  const SizedBox(height: 32), // Optional: space from the bottom
 
                   SizedBox(
                     width: double.infinity,
@@ -163,26 +163,26 @@ class _HomePageState extends State<HomePage> {
                         );
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Color(0xFF085373),
+                        backgroundColor: const Color(0xFF085373),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                         ),
                       ),
-                      child: Text('Log In', style: TextStyle(fontSize: 18, color: Colors.white)),
+                      child: const Text('Log In', style: TextStyle(fontSize: 18, color: Colors.white)),
                     ),
                   ),
-                  SizedBox(height: 24),
+                  const SizedBox(height: 24),
                   // Rectangle page slider at the very bottom
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: List.generate(_pages.length, (index) {
                       return AnimatedContainer(
-                        duration: Duration(milliseconds: 300),
-                        margin: EdgeInsets.symmetric(horizontal: 6),
+                        duration: const Duration(milliseconds: 300),
+                        margin: const EdgeInsets.symmetric(horizontal: 6),
                         width: _currentPage == index ? 32 : 16,
                         height: 8,
                         decoration: BoxDecoration(
-                          color: _currentPage == index ? Color(0xFF085373) : Colors.white54,
+                          color: _currentPage == index ? const Color(0xFF085373) : Colors.white54,
                           borderRadius: BorderRadius.circular(4),
                         ),
                       );

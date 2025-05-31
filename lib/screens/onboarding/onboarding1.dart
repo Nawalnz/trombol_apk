@@ -3,7 +3,7 @@ import 'package:trombol_apk/screens/contactus.dart';
 import 'package:trombol_apk/screens/onboarding/onboarding2.dart';
 
 void main() {
-  runApp(MaterialApp(
+  runApp(const MaterialApp(
     debugShowCheckedModeBanner: false,
     home: Onboarding1(),
   ));
@@ -21,14 +21,14 @@ class _Onboarding1State extends State<Onboarding1> {
   int _currentPage = 0;
 
   final List<Widget> _pages = [
-    Center(child: Text('First onboarding page', style: TextStyle(fontSize: 24, color: Colors.transparent))),
-    Center(child: Text('Second onboarding page', style: TextStyle(fontSize: 24, color: Colors.transparent))),
+    const Center(child: Text('First onboarding page', style: TextStyle(fontSize: 24, color: Colors.transparent))),
+    const Center(child: Text('Second onboarding page', style: TextStyle(fontSize: 24, color: Colors.transparent))),
   ];
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: BoxDecoration(
+      decoration: const BoxDecoration(
         image: DecorationImage(
           image: AssetImage('assets/images/SplashBackground.jpg'),
           fit: BoxFit.cover,
@@ -41,7 +41,7 @@ class _Onboarding1State extends State<Onboarding1> {
         appBar: AppBar(
           backgroundColor: Colors.transparent,
           elevation: 0,
-          title: Text(''),
+          title: const Text(''),
           actions: [
             // Builder(
             //   builder: (context) => IconButton(
@@ -70,12 +70,12 @@ class _Onboarding1State extends State<Onboarding1> {
             padding: EdgeInsets.zero,
             children: <Widget>[
               DrawerHeader(
-                decoration: BoxDecoration(color: Colors.transparent),
+                decoration: const BoxDecoration(color: Colors.transparent),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Container(
-                      margin: EdgeInsets.only(bottom: 10),
+                      margin: const EdgeInsets.only(bottom: 10),
                       child: Image.asset(
                         'assets/images/Logo.png',
                         width: 250,
@@ -96,13 +96,13 @@ class _Onboarding1State extends State<Onboarding1> {
               // ),
               // SizedBox(height: 20),
               ListTile(
-                leading: Icon(Icons.connect_without_contact_rounded, size: 30.0),
-                title: Text('Contact Us', style: TextStyle(fontSize: 20.0)),
+                leading: const Icon(Icons.connect_without_contact_rounded, size: 30.0),
+                title: const Text('Contact Us', style: TextStyle(fontSize: 20.0)),
                 onTap: () {
                   Navigator.pop(context);
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => ContactUs()),
+                    MaterialPageRoute(builder: (context) => const ContactUs()),
                   );
                 },
               ),
@@ -116,10 +116,10 @@ class _Onboarding1State extends State<Onboarding1> {
               mainAxisAlignment: MainAxisAlignment.start,
               children: [
 
-                Spacer(),
+                const Spacer(),
 
                 ColorFiltered(
-                  colorFilter: ColorFilter.mode(
+                  colorFilter: const ColorFilter.mode(
                     Colors.white,
                     BlendMode.srcATop,
                   ),
@@ -130,7 +130,7 @@ class _Onboarding1State extends State<Onboarding1> {
                     fit: BoxFit.contain,
                   ),
                 ),
-                SizedBox(height: 22),
+                const SizedBox(height: 22),
 
                 // Card with onboarding content and Next button
                 Card(
@@ -139,13 +139,13 @@ class _Onboarding1State extends State<Onboarding1> {
                     borderRadius: BorderRadius.circular(16),
                   ),
                   color: Colors.white,
-                  margin: EdgeInsets.symmetric(vertical: 16, horizontal: 8),
+                  margin: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
                   child: Padding(
                     padding: const EdgeInsets.all(24.0),
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Text(
+                        const Text(
                           'Welcome to Trombol Paradise Beach!',
                           style: TextStyle(
                             fontSize: 30,
@@ -153,8 +153,8 @@ class _Onboarding1State extends State<Onboarding1> {
                             color: Colors.black87,
                           ),
                         ),
-                        SizedBox(height: 12),
-                        Text(
+                        const SizedBox(height: 12),
+                        const Text(
                           'Trombol Paradise Beach situated in the South China Sea and ranks the 4th among 27 beaches of the Sarawak region.',
                           style: TextStyle(
                             fontSize: 16,
@@ -173,7 +173,7 @@ class _Onboarding1State extends State<Onboarding1> {
                             children: _pages,
                           ),
                         ),
-                        SizedBox(height: 24),
+                        const SizedBox(height: 24),
 
                         SizedBox(
                           width: double.infinity,
@@ -183,18 +183,18 @@ class _Onboarding1State extends State<Onboarding1> {
                               if (_currentPage < _pages.length - 1) {
                                 _pageController.animateToPage(
                                   _currentPage + 1,
-                                  duration: Duration(milliseconds: 400),
+                                  duration: const Duration(milliseconds: 400),
                                   curve: Curves.easeInOut,
                                 );
                               } else {
                                 Navigator.push(
                                   context,
-                                  MaterialPageRoute(builder: (context) => HomePage()),
+                                  MaterialPageRoute(builder: (context) => const HomePage()),
                                 );
                               }
                             },
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: Color(0xFF085373),
+                              backgroundColor: const Color(0xFF085373),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(12),
                               ),
@@ -213,12 +213,12 @@ class _Onboarding1State extends State<Onboarding1> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: List.generate(_pages.length, (index) {
                     return AnimatedContainer(
-                      duration: Duration(milliseconds: 300),
-                      margin: EdgeInsets.symmetric(horizontal: 6),
+                      duration: const Duration(milliseconds: 300),
+                      margin: const EdgeInsets.symmetric(horizontal: 6),
                       width: _currentPage == index ? 32 : 16,
                       height: 8,
                       decoration: BoxDecoration(
-                        color: _currentPage == index ? Color(0xFF085373) : Colors.white54,
+                        color: _currentPage == index ? const Color(0xFF085373) : Colors.white54,
                         borderRadius: BorderRadius.circular(4),
                       ),
                     );
