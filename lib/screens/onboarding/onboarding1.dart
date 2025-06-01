@@ -43,26 +43,26 @@ class _Onboarding1State extends State<Onboarding1> {
           elevation: 0,
           title: const Text(''),
           actions: [
-            Builder(
-              builder: (context) => IconButton(
-                icon: const Icon(Icons.menu, color: Colors.white),
-                onPressed: () {
-                  if (_currentPage < _pages.length - 1) {
-                    _pageController.animateToPage(
-                      _currentPage + 1,
-                      duration: const Duration(milliseconds: 400),
-                      curve: Curves.easeInOut,
-                    );
-                  } else {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => const HomePage()),
-                    );
-                  }
-                },
-
-              ),
-            ),
+            // Builder(
+            //   builder: (context) => IconButton(
+            //     icon: Icon(Icons.menu, color: Colors.white),
+            //     onPressed: () {
+            //       if (_currentPage < _pages.length - 1) {
+            //         _pageController.animateToPage(
+            //           _currentPage + 1,
+            //           duration: const Duration(milliseconds: 400),
+            //           curve: Curves.easeInOut,
+            //         );
+            //       } else {
+            //         Navigator.push(
+            //           context,
+            //           MaterialPageRoute(builder: (context) => const HomePage()),
+            //         );
+            //       }
+            //     },
+            //
+            //   ),
+            // ),
           ],
         ),
         endDrawer: Drawer(
@@ -86,15 +86,15 @@ class _Onboarding1State extends State<Onboarding1> {
                   ],
                 ),
               ),
-              const SizedBox(height: 20),
-              ListTile(
-                leading: const Icon(Icons.travel_explore, size: 30.0),
-                title: const Text('Explore Beach', style: TextStyle(fontSize: 20.0)),
-                onTap: () {
-                  Navigator.pop(context);
-                },
-              ),
-              const SizedBox(height: 20),
+              SizedBox(height: 20),
+              // ListTile(
+              //   leading: Icon(Icons.travel_explore, size: 30.0),
+              //   title: Text('Explore Beach', style: TextStyle(fontSize: 20.0)),
+              //   onTap: () {
+              //     Navigator.pop(context);
+              //   },
+              // ),
+              // SizedBox(height: 20),
               ListTile(
                 leading: const Icon(Icons.connect_without_contact_rounded, size: 30.0),
                 title: const Text('Contact Us', style: TextStyle(fontSize: 20.0)),
@@ -199,9 +199,7 @@ class _Onboarding1State extends State<Onboarding1> {
                                 borderRadius: BorderRadius.circular(12),
                               ),
                             ),
-                            child: Text(
-                              _currentPage < _pages.length - 1 ? 'Next': 'Next',
-                              style: const TextStyle(fontSize: 18, color: Colors.white),
+                            child: Text('Next', style: TextStyle(fontSize: 18, color: Colors.white),
                             ),
                           ),
                         ),

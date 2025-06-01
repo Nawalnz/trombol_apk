@@ -76,15 +76,15 @@ class _HomePageState extends State<HomePage> {
                     ],
                   ),
                 ),
-                const SizedBox(height: 20),
-                ListTile(
-                  leading: const Icon(Icons.travel_explore, size: 30.0),
-                  title: const Text('Explore Beach', style: TextStyle(fontSize: 20.0)),
-                  onTap: () {
-                    Navigator.pop(context);
-                  },
-                ),
-                const SizedBox(height: 20),
+                // SizedBox(height: 20),
+                // ListTile(
+                //   leading: Icon(Icons.travel_explore, size: 30.0),
+                //   title: Text('Explore Beach', style: TextStyle(fontSize: 20.0)),
+                //   onTap: () {
+                //     Navigator.pop(context);
+                //   },
+                // ),
+                SizedBox(height: 20),
                 ListTile(
                   leading: const Icon(Icons.connect_without_contact_rounded, size: 30.0),
                   title: const Text('Contact Us', style: TextStyle(fontSize: 20.0)),
@@ -134,24 +134,24 @@ class _HomePageState extends State<HomePage> {
                   SizedBox(
                     width: double.infinity,
                     height: 56,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (context) => const ExploreToday()),
-                        );
-                      },
-
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF085373),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      child: const Text('Explore Beach', style: TextStyle(fontSize: 18, color: Colors.white)),
-                    ),
+                    // child: ElevatedButton(
+                    //   onPressed: () {
+                    //     Navigator.push(
+                    //       context,
+                    //       MaterialPageRoute(builder: (context) => const ExploreToday()),
+                    //     );
+                    //   },
+                    //
+                    // //   style: ElevatedButton.styleFrom(
+                    // //     backgroundColor: Color(0xFF085373),
+                    // //     shape: RoundedRectangleBorder(
+                    // //       borderRadius: BorderRadius.circular(12),
+                    // //     ),
+                    // //   ),
+                    // //   child: Text('Explore Beach', style: TextStyle(fontSize: 18, color: Colors.white)),
+                    // ),
                   ),
-                  const SizedBox(height: 16),
+                  // SizedBox(height: 16),
                   SizedBox(
                     width: double.infinity,
                     height: 56,
