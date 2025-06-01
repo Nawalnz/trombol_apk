@@ -1,4 +1,5 @@
 import "package:flutter/material.dart";
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:trombol_apk/screens/homepage/search.dart';
 import 'package:trombol_apk/screens/navbar_button/booking/booked_list.dart';
 import 'package:trombol_apk/screens/navbar_button/notification/notification.dart';
@@ -12,18 +13,18 @@ class ExploreToday extends StatefulWidget {
 }
 
 class _ExploreTodayScreenState extends State<ExploreToday> {
-  int _currentIndex = 0; // track bottom nav index
+  int _currentIndex = 0;
 
   final List<Widget> _pages = [
-    const ExploreTodayContent(),  // Home content
-    const BookingsPage(),         // Booking content
-    NotificationPage(),     // Notification content
-    const ProfilePage(),          // Profile content
+    const ExploreTodayContent(),
+    const BookingsPage(),
+    NotificationPage(),
+    const ProfilePage(),
   ];
 
   void _onTabTapped(int index) {
     setState(() {
-      _currentIndex = index; // update current page
+      _currentIndex = index;
     });
   }
 
@@ -48,7 +49,6 @@ class _ExploreTodayScreenState extends State<ExploreToday> {
   }
 }
 
-// --- Separate Home page content into widget ---
 class ExploreTodayContent extends StatelessWidget {
   const ExploreTodayContent({super.key});
 
@@ -60,7 +60,6 @@ class ExploreTodayContent extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Header with background image
             Stack(
               children: [
                 MediaQuery.removePadding(
@@ -90,7 +89,6 @@ class ExploreTodayContent extends StatelessWidget {
                         style: TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w400),
                       ),
                       const SizedBox(height: 20),
-                      // Search Bar
                       GestureDetector(
                         onTap: () {
                           Navigator.push(
@@ -142,76 +140,44 @@ class ExploreTodayContent extends StatelessWidget {
 
             const Padding(
               padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 12),
-              child: Text("Popular Activities", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              child: Text("Accommodations", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             ),
-            _buildHorizontalList([
-              _buildCard("assets/images/atv.png", "Riding ATV", "100 reviews"),
-              _buildCard("assets/images/beach_volleyball.jpeg", "Beach Volleyball", "87 reviews"),
-            ]),
+            _buildProductList(context, category: 'accommodation'),
 
             const Padding(
               padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 12),
-              child: Text("Food & Refreshments", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              child: Text("Activities", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             ),
-            _buildHorizontalList([
-              _buildCard("assets/images/oden.png", "Oden", "Nice street food"),
-              _buildCard("assets/images/air_balang.jpeg", "Air Balang", "Refreshment"),
-            ]),
+            _buildProductList(context, category: 'activity'),
 
             const Padding(
               padding: EdgeInsets.symmetric(horizontal: 16.0, vertical: 12),
-              child: Text("Travel beyond the boundary", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+              child: Text("Nature", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
             ),
-            _buildHorizontalList([
-              _buildCard("assets/images/monkey.png", "Bako National Park", "100 reviews"),
-              _buildCard("assets/images/borneo_jungle.jpeg", "Borneo Jungle", "RM50.00+"),
-            ]),
+            _buildProductList(context, category: 'nature'),
           ],
         ),
       ),
     );
   }
 
-  static Widget _buildCategoryButton(BuildContext context,IconData icon, String label) {
+  static Widget _buildCategoryButton(BuildContext context, IconData icon, String label) {
     return Container(
       margin: const EdgeInsets.only(right: 10),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
       decoration: BoxDecoration(
         color: Theme.of(context).brightness == Brightness.dark
-        ? Colors.black.withAlpha(102)
-        : Colors.white,
+            ? Colors.black.withAlpha(102)
+            : Colors.white,
         borderRadius: BorderRadius.circular(20),
         boxShadow: const [BoxShadow(color: Colors.grey, blurRadius: 5)],
       ),
       child: Row(
         children: [
-          Icon(
-            icon, size: 16,
-            color: Theme.of(context).brightness == Brightness.dark
-            ? Colors.white
-            : Colors.black, ),
+          Icon(icon, size: 16, color: Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black),
           const SizedBox(width: 6),
-          Text(
-              label,
-              style: TextStyle(fontSize: 14, color: Theme.of(context).brightness == Brightness.dark
-                  ? Colors.white
-                  : Colors.black)
-          ),
+          Text(label, style: TextStyle(fontSize: 14, color: Theme.of(context).brightness == Brightness.dark ? Colors.white : Colors.black)),
         ],
-      ),
-    );
-  }
-
-  static Widget _buildHorizontalList(List<Widget> items) {
-    return SizedBox(
-      height: 230,
-      child: ListView(
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        children: items.map((item) => Padding(
-          padding: const EdgeInsets.only(right: 15),
-          child: item,
-        )).toList(),
       ),
     );
   }
@@ -222,9 +188,7 @@ class ExploreTodayContent extends StatelessWidget {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
         color: Colors.white,
-        boxShadow: const [
-          BoxShadow(color: Colors.black12, blurRadius: 4),
-        ],
+        boxShadow: const [BoxShadow(color: Colors.black12, blurRadius: 4)],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -232,11 +196,8 @@ class ExploreTodayContent extends StatelessWidget {
           Stack(
             children: [
               ClipRRect(
-                borderRadius: const BorderRadius.only(
-                  topLeft: Radius.circular(12),
-                  topRight: Radius.circular(12),
-                ),
-                child: Image.asset(image, height: 100, width: 160, fit: BoxFit.cover),
+                borderRadius: const BorderRadius.only(topLeft: Radius.circular(12), topRight: Radius.circular(12)),
+                child: Image.network(image, height: 100, width: 160, fit: BoxFit.cover),
               ),
               const Positioned(
                 top: 8,
@@ -254,14 +215,7 @@ class ExploreTodayContent extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                    title,
-                    style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 14,
-                        color: Colors.black,
-                    )
-                ),
+                Text(title, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.black)),
                 const SizedBox(height: 4),
                 const Row(
                   children: [
@@ -273,12 +227,65 @@ class ExploreTodayContent extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 4),
-                Text(subtitle, style: const TextStyle(color: Colors.grey, fontSize: 12, fontWeight: FontWeight.w400)),
+                Text(
+                  subtitle.length > 40 ? '${subtitle.substring(0, 40)}...' : subtitle,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(color: Colors.grey, fontSize: 12, fontWeight: FontWeight.w400),
+                ),
+
               ],
             ),
           ),
         ],
       ),
+    );
+  }
+
+  static Widget _buildProductList(BuildContext context, {required String category}) {
+    return StreamBuilder<QuerySnapshot>(
+      stream: FirebaseFirestore.instance
+          .collection('products')
+          .where('type', isEqualTo: category)
+          .snapshots(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const SizedBox(
+            height: 230,
+            child: Center(child: CircularProgressIndicator()),
+          );
+        }
+
+        if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+          return const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16),
+            child: Text('No items available in this category'),
+          );
+        }
+
+        final items = snapshot.data!.docs;
+
+        return SizedBox(
+          height: 230,
+          child: ListView.builder(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            itemCount: items.length,
+            itemBuilder: (context, index) {
+              final data = items[index].data() as Map<String, dynamic>;
+              final image = (data['image'] as List?)?.cast<String>().firstOrNull ??
+                  'https://via.placeholder.com/150';
+              final name = data['name'] ?? 'Unnamed';
+              final desc = data['description'] ?? 'No description';
+
+              return Padding(
+                padding: const EdgeInsets.only(right: 15),
+                child: _buildCard(image, name, desc),
+              );
+            },
+          ),
+        );
+      },
     );
   }
 }
