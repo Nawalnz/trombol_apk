@@ -3,6 +3,7 @@ import "package:flutter/material.dart";
 import "package:firebase_core/firebase_core.dart";
 import 'package:trombol_apk/screens/bookplace/tour_detail.dart';
 import 'package:trombol_apk/screens/login/auth_gate.dart';
+import 'package:trombol_apk/screens/login/login_user.dart';
 import 'package:trombol_apk/screens/navbar_button/profile/profile.dart';
 import 'firebase_options.dart';
 import 'package:provider/provider.dart';
@@ -23,9 +24,6 @@ void main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
-  await FirebaseAuth.instance.setPersistence(Persistence.LOCAL);
-  final auth = FirebaseAuth.instance;
-  if (auth.currentUser == null) { }
 
   runApp(
       ChangeNotifierProvider(
@@ -35,21 +33,18 @@ void main() async {
 }
 
 
-class MyApp extends StatefulWidget {
+class MyApp extends StatelessWidget {
   const MyApp({super.key});
-  @override
-  State<MyApp> createState() => _MyAppState();
-}
 
-class _MyAppState extends State<MyApp> {
   @override
   Widget build(BuildContext context) {
     final themeNotifier= Provider.of<ThemeNotifier>(context);
 
     return MaterialApp(
+      home: const AuthGate(),
       debugShowCheckedModeBanner: false,
       title: 'Trombol Paradise Beach',
-      home: AuthGate(),
+
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.teal, brightness: Brightness.light),
         useMaterial3: true,
@@ -62,6 +57,7 @@ class _MyAppState extends State<MyApp> {
 
       // --- static, no-arg routes ---
       routes: {
+        '/login':        (c) => const AuthGate(),
         '/next':        (c) => const Onboarding2(),
         '/explore':     (c) => const ExploreToday(),
         '/tour':        (c) => const TourDetailPage(tourData: {}),

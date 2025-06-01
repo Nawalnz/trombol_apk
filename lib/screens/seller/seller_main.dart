@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:trombol_apk/screens/login/auth_gate.dart';
 import 'package:trombol_apk/screens/onboarding/onboarding1.dart';
 import 'dashboard.dart';
 import 'upload_product.dart';
@@ -94,7 +95,13 @@ class _SellerMainState extends State<SellerMain> {
 
     if (confirm == true) {
       await FirebaseAuth.instance.signOut();
-      // AuthGate will now automatically redirect to onboarding/login
+
+      // Wait for sign out to complete, then redirect
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (_) => const AuthGate()),
+            (_) => false,
+      );
     }
   }
 

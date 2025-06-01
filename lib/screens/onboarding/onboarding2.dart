@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:trombol_apk/screens/contactus.dart';
+import 'package:trombol_apk/screens/login/auth_gate.dart';
 import 'package:trombol_apk/screens/login/login_user.dart';
 
 class Onboarding2 extends StatefulWidget {
@@ -101,7 +102,7 @@ class _Onboarding2State extends State<Onboarding2> {
                       onPressed: () {
                         Navigator.pushReplacement(
                           context,
-                          MaterialPageRoute(builder: (context) => const LoginUser()),
+                          MaterialPageRoute(builder: (context) => const AuthGate()),
                         );
                       },
                       style: ElevatedButton.styleFrom(
