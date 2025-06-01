@@ -39,8 +39,14 @@ class _UploadProductPageState extends State<UploadProductPage> {
       _priceController.text = p['price']?.toString() ?? '';
       _descriptionController.text = p['description'] ?? '';
       _category = p['type'] as String?;
-      final images = (p['image'] as List?)?.cast<String>() ?? [];
-      _existingImageUrls = images;
+
+      final imagesRaw = widget.product['image'];
+      if (imagesRaw is List) {
+        _existingImageUrls = imagesRaw.cast<String>();
+      } else if (imagesRaw is String) {
+        _existingImageUrls = [imagesRaw];
+      }
+
     }
   }
 
