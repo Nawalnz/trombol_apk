@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 
 import 'package:trombol_apk/screens/homepage/explore.dart';
 import 'package:trombol_apk/screens/login/login_user.dart';
+
 import 'package:trombol_apk/screens/onboarding/onboarding1.dart';
 import 'package:trombol_apk/screens/seller/seller_main.dart';
 
@@ -23,6 +24,7 @@ class AuthGate extends StatelessWidget {
 
         if (user == null) {
           return const LoginUser(); // not logged in
+
         }
 
         return FutureBuilder<DocumentSnapshot>(
