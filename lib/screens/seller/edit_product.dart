@@ -23,8 +23,9 @@ class _EditProductPageState extends State<EditProductPage>
     with AutomaticKeepAliveClientMixin<EditProductPage> {
   final _formKey = GlobalKey<FormState>();
   String? _category;
-  File? _imageFile;
-  String? _existingImageUrl;
+  List<File> _imageFiles = [];
+  List<String> _existingImageUrls = [];
+  List<DateTime> _unavailableDates = [];
 
   final _nameController = TextEditingController();
   final _priceController = TextEditingController();
@@ -38,21 +39,33 @@ class _EditProductPageState extends State<EditProductPage>
   void initState() {
     super.initState();
     final p = widget.product;
-    _nameController.text        = p['prod_name'] ?? '';
-    // support both price field keys
-    final rawPrice = p['prod_pricePerPax'] ?? p['prod_price'];
-    _priceController.text       = rawPrice != null ? rawPrice.toString() : '';
-    _descriptionController.text = p['prod_desc'] ?? '';
-    _category                   = p['prod_types'];
-    _existingImageUrl           = p['image'];
+
+    _nameController.text = p['name'] ?? '';
+    final rawPrice = p['prod_pricePerPax'] ?? p['price'];
+    _priceController.text = rawPrice != null ? rawPrice.toString() : '';
+    _descriptionController.text = p['description'] ?? '';
+    _category = p['type'];
+    final images = (p['image'] as List?)?.cast<String>() ?? [];
+    _existingImageUrls = images;
+    final List<dynamic>? dates = p['unavailableDates'];
+    if (dates != null) {
+      _unavailableDates = dates.map((d) => DateTime.parse(d.toString())).toList();
+    }
+
   }
 
   Future<void> _pickImage() async {
+    if (_imageFiles.length + _existingImageUrls.length >= 5) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('You can upload up to 5 images only')),
+      );
+      return;
+    }
+
     final picked = await ImagePicker().pickImage(source: ImageSource.gallery);
     if (picked != null) {
       setState(() {
-        _imageFile = File(picked.path);
-        _existingImageUrl = null;
+        _imageFiles.add(File(picked.path));
       });
     }
   }
@@ -60,27 +73,29 @@ class _EditProductPageState extends State<EditProductPage>
   Future<void> _submitForm() async {
     if (!_formKey.currentState!.validate()) return;
 
-    final name        = _nameController.text.trim();
-    final price       = double.tryParse(_priceController.text.trim()) ?? 0.0;
+    final name = _nameController.text.trim();
+    final price = double.tryParse(_priceController.text.trim()) ?? 0.0;
     final description = _descriptionController.text.trim();
-    String? imageUrl  = _existingImageUrl;
-
-    if (_imageFile != null) {
-      final fileName = '${DateTime.now().millisecondsSinceEpoch}_${_imageFile!.path.split('/').last}';
-      final ref = FirebaseStorage.instance
-          .ref()
-          .child('product_images/$fileName');
-      await ref.putFile(_imageFile!);
-      imageUrl = await ref.getDownloadURL();
+    List<String> uploadedUrls = [];
+    for (var imageFile in _imageFiles) {
+      final fileName = '${DateTime.now().millisecondsSinceEpoch}_${imageFile.path.split('/').last}';
+      final ref = FirebaseStorage.instance.ref().child('product_images/$fileName');
+      await ref.putFile(imageFile);
+      final url = await ref.getDownloadURL();
+      uploadedUrls.add(url);
     }
 
+    final allImages = [..._existingImageUrls, ...uploadedUrls];
+
     final products = {
-      'prod_name'        : name,
-      'prod_price'       : price,
-      'prod_types'       : _category,
-      'prod_desc'        : description,
-      'image'            : imageUrl,
-      'prod_lastUpdated' : FieldValue.serverTimestamp(),
+
+      'name': name,
+      'price': price,
+      'type': _category,
+      'description': description,
+      'image': allImages,
+      'edited': FieldValue.serverTimestamp(),
+      'unavailableDates': _unavailableDates.map((d) => d.toIso8601String()).toList(),
     };
 
     try {
@@ -151,6 +166,46 @@ class _EditProductPageState extends State<EditProductPage>
     contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
   );
 
+  Widget _buildImagePreview() {
+    final previews = <Widget>[];
+
+    for (var i = 0; i < _existingImageUrls.length; i++) {
+      final url = _existingImageUrls[i];
+      previews.add(Stack(
+        children: [
+          Image.network(url, height: 100, width: 100, fit: BoxFit.cover),
+          Positioned(
+            top: 0,
+            right: 0,
+            child: GestureDetector(
+              onTap: () => setState(() => _existingImageUrls.removeAt(i)),
+              child: const Icon(Icons.close, color: Colors.red),
+            ),
+          )
+        ],
+      ));
+    }
+
+    for (var i = 0; i < _imageFiles.length; i++) {
+      final file = _imageFiles[i];
+      previews.add(Stack(
+        children: [
+          Image.file(file, height: 100, width: 100, fit: BoxFit.cover),
+          Positioned(
+            top: 0,
+            right: 0,
+            child: GestureDetector(
+              onTap: () => setState(() => _imageFiles.removeAt(i)),
+              child: const Icon(Icons.close, color: Colors.red),
+            ),
+          )
+        ],
+      ));
+    }
+
+    return Wrap(spacing: 8, runSpacing: 8, children: previews);
+  }
+
   @override
   Widget build(BuildContext context) {
     super.build(context);
@@ -192,7 +247,9 @@ class _EditProductPageState extends State<EditProductPage>
                         DropdownButtonFormField<String>(
                           value: _category,
                           decoration: _inputDecoration("Select category"),
-                          items: ['Adventure', 'Relaxation', 'Nature']
+
+                          items: ['accommodation', 'relaxation', 'nature', 'activity']
+
                               .map((c) => DropdownMenuItem(value: c, child: Text(c)))
                               .toList(),
                           onChanged: (c) => setState(() => _category = c),
@@ -241,12 +298,57 @@ class _EditProductPageState extends State<EditProductPage>
                     borderRadius: BorderRadius.circular(12),
                   ),
                   alignment: Alignment.center,
-                  child: _imageFile != null
-                      ? Image.file(_imageFile!, height: 100, fit: BoxFit.cover)
-                      : (_existingImageUrl != null
-                      ? Image.network(_existingImageUrl!, height: 100, fit: BoxFit.cover)
-                      : const Icon(Icons.upload, size: 40)),
+                  child: const Icon(Icons.upload, size: 40, color: Colors.grey),
                 ),
+              ),
+
+
+              SizedBox(height: 8),
+              _buildImagePreview(),
+
+              const SizedBox(height: 16),
+              const Text("Unavailable Dates", style: TextStyle(fontWeight: FontWeight.bold)),
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  ..._unavailableDates.map((date) => Chip(
+                    label: Text("${date.toLocal()}".split(' ')[0]),
+                    deleteIcon: const Icon(Icons.close),
+                    onDeleted: () {
+                      setState(() => _unavailableDates.remove(date));
+                    },
+                  )),
+                  ActionChip(
+                    label: const Text("Add Date"),
+                    avatar: const Icon(Icons.date_range),
+                    onPressed: () async {
+                      final pickedRange = await showDateRangePicker(
+                        context: context,
+                        firstDate: DateTime.now(),
+                        lastDate: DateTime.now().add(const Duration(days: 365)),
+                      );
+                      if (pickedRange != null) {
+                        final range = List.generate(
+                          pickedRange.end.difference(pickedRange.start).inDays + 1,
+                              (i) => DateTime(
+                            pickedRange.start.year,
+                            pickedRange.start.month,
+                            pickedRange.start.day + i,
+                          ),
+                        );
+                        setState(() {
+                          for (final d in range) {
+                            if (!_unavailableDates.contains(d)) {
+                              _unavailableDates.add(d);
+                            }
+                          }
+                        });
+                      }
+
+                    },
+                  )
+                ],
               ),
 
               const SizedBox(height: 24),
