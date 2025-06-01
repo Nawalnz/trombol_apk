@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:trombol_apk/screens/contactus.dart';
 import 'package:trombol_apk/screens/onboarding/onboarding2.dart';
 
 class Onboarding1 extends StatelessWidget {

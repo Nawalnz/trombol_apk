@@ -28,6 +28,8 @@ class _UploadProductPageState extends State<UploadProductPage> {
   final _priceController = TextEditingController();
   final _descriptionController = TextEditingController();
 
+  bool _isSubmitting = false;
+
   @override
   void initState() {
     super.initState();
@@ -72,62 +74,70 @@ class _UploadProductPageState extends State<UploadProductPage> {
   }
 
   Future<void> _submitForm() async {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user == null) return;
+    if (_isSubmitting) return;
 
-    final roleDoc = FirebaseFirestore.instance.collection('user_roles').doc(user.uid);
-    final snap = await roleDoc.get();
-    if (!snap.exists || snap.data()?['isAdmin'] != true) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Insufficient permissions: Admin access required'),
-          backgroundColor: Colors.red,
-        ),
-      );
-      return;
-    }
-
-    if (!_formKey.currentState!.validate()) return;
-    if (_imageFiles.isEmpty && _existingImageUrls.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please upload at least one image')),
-      );
-      return;
-    }
-
-    final name = _nameController.text.trim();
-    final price = double.tryParse(_priceController.text.trim()) ?? 0;
-    final desc = _descriptionController.text.trim();
-
-    final uploadedUrls = await _uploadToStorage();
-    final allImageUrls = [..._existingImageUrls, ...uploadedUrls];
-
-    final now = FieldValue.serverTimestamp();
-    final data = {
-      'name': name,
-      'price': price,
-      'type': _category,
-      'description': desc,
-      'image': allImageUrls,
-      'edited': now,
-    };
-    if (widget.docId.isEmpty) data['created'] = now;
+    setState(() => _isSubmitting = true);
 
     try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) return;
+
+      final roleDoc = FirebaseFirestore.instance.collection('users').doc(user.uid);
+      final snap = await roleDoc.get();
+      if (!snap.exists || snap.data()?['isAdmin'] != true) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Insufficient permissions: Admin access required'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
+
+      if (!_formKey.currentState!.validate()) return;
+      if (_imageFiles.isEmpty && _existingImageUrls.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Please upload at least one image')),
+        );
+        return;
+      }
+
+      final name = _nameController.text.trim();
+      final price = double.tryParse(_priceController.text.trim()) ?? 0;
+      final desc = _descriptionController.text.trim();
+
+      final uploadedUrls = await _uploadToStorage();
+      final allImageUrls = [..._existingImageUrls, ...uploadedUrls];
+
+      final now = FieldValue.serverTimestamp();
+      final data = {
+        'name': name,
+        'price': price,
+        'type': _category,
+        'description': desc,
+        'image': allImageUrls,
+        'edited': now,
+      };
+      if (widget.docId.isEmpty) data['created'] = now;
+
       final coll = FirebaseFirestore.instance.collection('products');
       if (widget.docId.isEmpty) {
         await coll.add(data);
       } else {
         await coll.doc(widget.docId).update(data);
       }
+
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Product saved successfully')),
       );
+
       _resetForm();
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error saving product: $e')),
       );
+    } finally {
+      if (mounted) setState(() => _isSubmitting = false);
     }
   }
 
@@ -198,94 +208,108 @@ class _UploadProductPageState extends State<UploadProductPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: const Text('Upload New Product')),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Form(
-          key: _formKey,
-          child: ListView(
-            controller: _scrollController,
-            children: [
-              const SizedBox(height: 6),
-              TextFormField(
-                controller: _nameController,
-                decoration: _inputDecoration('Enter product name'),
-                validator: (v) => v == null || v.isEmpty ? 'Enter product name' : null,
-              ),
-              const SizedBox(height: 16),
-              Row(children: [
-                Expanded(
-                  child: DropdownButtonFormField<String>(
-                    value: _category,
-                    decoration: _inputDecoration('Select category'),
-                    items: ['accommodation', 'nature', 'activity']
-                        .map((c) => DropdownMenuItem(value: c, child: Text(c)))
-                        .toList(),
-                    onChanged: (c) => setState(() => _category = c),
-                    validator: (v) => v == null ? 'Select a category' : null,
+      body: Stack(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Form(
+              key: _formKey,
+              child: ListView(
+                controller: _scrollController,
+                children: [
+                  const SizedBox(height: 6),
+                  TextFormField(
+                    controller: _nameController,
+                    decoration: _inputDecoration('Enter product name'),
+                    validator: (v) => v == null || v.isEmpty ? 'Enter product name' : null,
                   ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: TextFormField(
-                    controller: _priceController,
-                    decoration: _inputDecoration('Enter price'),
-                    keyboardType: TextInputType.number,
-                    validator: (v) => v == null || v.isEmpty ? 'Enter price' : null,
-                  ),
-                ),
-              ]),
-              const SizedBox(height: 16),
-              TextFormField(
-                controller: _descriptionController,
-                decoration: _inputDecoration('Describe your product'),
-                maxLines: 3,
-              ),
-              const SizedBox(height: 16),
-              const Text('Upload Images (max 5)', style: TextStyle(fontWeight: FontWeight.bold)),
-              const SizedBox(height: 8),
-              GestureDetector(
-                onTap: _pickImage,
-                child: Container(
-                  height: 100,
-                  decoration: BoxDecoration(
-                    border: Border.all(color: Colors.black26),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  alignment: Alignment.center,
-                  child: const Icon(Icons.upload, size: 40, color: Colors.grey),
-                ),
-              ),
-              const SizedBox(height: 8),
-              _buildImagePreview(),
-              const SizedBox(height: 24),
-              Row(children: [
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: _submitForm,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF004C6D),
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                  const SizedBox(height: 16),
+                  Row(children: [
+                    Expanded(
+                      child: DropdownButtonFormField<String>(
+                        value: _category,
+                        decoration: _inputDecoration('Select category'),
+                        items: ['accommodation', 'nature', 'activity']
+                            .map((c) => DropdownMenuItem(value: c, child: Text(c)))
+                            .toList(),
+                        onChanged: (c) => setState(() => _category = c),
+                        validator: (v) => v == null ? 'Select a category' : null,
+                      ),
                     ),
-                    child: Text(widget.docId.isEmpty ? 'Create Product' : 'Save Changes', style: const TextStyle(color: Colors.white)),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: _resetForm,
-                    style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: Color(0xFF004C6D)),
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: TextFormField(
+                        controller: _priceController,
+                        decoration: _inputDecoration('Enter price'),
+                        keyboardType: TextInputType.number,
+                        validator: (v) => v == null || v.isEmpty ? 'Enter price' : null,
+                      ),
                     ),
-                    child: const Text('Reset', style: TextStyle(color: Color(0xFF004C6D))),
+                  ]),
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: _descriptionController,
+                    decoration: _inputDecoration('Describe your product'),
+                    maxLines: 3,
                   ),
-                ),
-              ]),
-            ],
+                  const SizedBox(height: 16),
+                  const Text('Upload Images (max 5)', style: TextStyle(fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 8),
+                  GestureDetector(
+                    onTap: _pickImage,
+                    child: Container(
+                      height: 100,
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.black26),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      alignment: Alignment.center,
+                      child: const Icon(Icons.upload, size: 40, color: Colors.grey),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  _buildImagePreview(),
+                  const SizedBox(height: 24),
+                  Row(children: [
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: _isSubmitting ? null : _submitForm,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF004C6D),
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                        ),
+                        child: Text(
+                          widget.docId.isEmpty ? 'Create Product' : 'Save Changes',
+                          style: const TextStyle(color: Colors.white),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: _isSubmitting ? null : _resetForm,
+                        style: OutlinedButton.styleFrom(
+                          side: const BorderSide(color: Color(0xFF004C6D)),
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                        ),
+                        child: const Text('Reset', style: TextStyle(color: Color(0xFF004C6D))),
+                      ),
+                    ),
+                  ]),
+                ],
+              ),
+            ),
           ),
-        ),
+          if (_isSubmitting)
+            const Positioned.fill(
+              child: ColoredBox(
+                color: Colors.black38,
+                child: Center(child: CircularProgressIndicator()),
+              ),
+            ),
+        ],
       ),
     );
   }
