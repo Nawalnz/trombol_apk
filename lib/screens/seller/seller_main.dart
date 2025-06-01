@@ -44,15 +44,6 @@ class _SellerMainState extends State<SellerMain> {
     ];
 
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.logout, color: Colors.red),
-          onPressed: () => _logout(context),
-        ),
-      ),
-
       body: IndexedStack(
         index: _currentIndex,
         children: pages,
@@ -63,12 +54,19 @@ class _SellerMainState extends State<SellerMain> {
         selectedItemColor: Colors.teal,
         unselectedItemColor: Colors.grey,
         currentIndex: _currentIndex,
-        onTap: (i) => setState(() => _currentIndex = i),
+        onTap: (i) {
+          if (i == 4) {
+            _logout(context);
+          } else {
+            setState(() => _currentIndex = i);
+          }
+        },
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.home), label: "Home"),
           BottomNavigationBarItem(icon: Icon(Icons.upload), label: "Upload"),
           BottomNavigationBarItem(icon: Icon(Icons.book_online), label: "Bookings"),
           BottomNavigationBarItem(icon: Icon(Icons.list), label: "Product List"),
+          BottomNavigationBarItem(icon: Icon(Icons.logout, color: Colors.red,), label: "Logout"),
         ],
       ),
     );
