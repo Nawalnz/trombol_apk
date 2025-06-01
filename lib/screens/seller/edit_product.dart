@@ -244,7 +244,7 @@ class _EditProductPageState extends State<EditProductPage>
                         DropdownButtonFormField<String>(
                           value: _category,
                           decoration: _inputDecoration("Select category"),
-                          items: ['accommodation', 'Relaxation', 'nature', 'activity']
+                          items: ['accommodation', 'relaxation', 'nature', 'activity']
                               .map((c) => DropdownMenuItem(value: c, child: Text(c)))
                               .toList(),
                           onChanged: (c) => setState(() => _category = c),
