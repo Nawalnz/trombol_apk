@@ -2,7 +2,6 @@ import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -22,8 +21,8 @@ class _UploadProductPageState extends State<UploadProductPage> {
   final _scrollController = ScrollController();
 
   String? _category;
-  File? _imageFile;
-  String? _existingImageUrl;
+  List<File> _imageFiles = [];
+  List<String> _existingImageUrls = [];
 
   final _nameController = TextEditingController();
   final _priceController = TextEditingController();
@@ -38,37 +37,43 @@ class _UploadProductPageState extends State<UploadProductPage> {
       _priceController.text = p['price']?.toString() ?? '';
       _descriptionController.text = p['description'] ?? '';
       _category = p['type'] as String?;
-      _existingImageUrl = (p['image'] as List?)?.isNotEmpty == true ? p['image'][0] : null;
+      final images = (p['image'] as List?)?.cast<String>() ?? [];
+      _existingImageUrls = images;
     }
   }
 
   Future<void> _pickImage() async {
+    if (_imageFiles.length + _existingImageUrls.length >= 5) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('You can upload up to 5 images only')),
+      );
+      return;
+    }
+
     final picker = ImagePicker();
     final picked = await picker.pickImage(source: ImageSource.gallery);
     if (picked != null) {
       setState(() {
-        _imageFile = File(picked.path);
-        _existingImageUrl = null;
+        _imageFiles.add(File(picked.path));
       });
     }
   }
 
-  Future<String?> _uploadToStorage() async {
-    if (_imageFile == null) return null;
-    final fileName = '${DateTime.now().millisecondsSinceEpoch}_${_imageFile!.path.split('/').last}';
-    final ref = FirebaseStorage.instance.ref().child('product_images').child(fileName);
-    final snapshot = await ref.putFile(_imageFile!);
-    return snapshot.ref.getDownloadURL();
+  Future<List<String>> _uploadToStorage() async {
+    List<String> urls = [];
+    for (var imageFile in _imageFiles) {
+      final fileName = '${DateTime.now().millisecondsSinceEpoch}_${imageFile.path.split('/').last}';
+      final ref = FirebaseStorage.instance.ref().child('product_images').child(fileName);
+      final snapshot = await ref.putFile(imageFile);
+      final url = await snapshot.ref.getDownloadURL();
+      urls.add(url);
+    }
+    return urls;
   }
 
   Future<void> _submitForm() async {
     final user = FirebaseAuth.instance.currentUser;
-    if (user == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('You must be signed in to upload products')),
-      );
-      return;
-    }
+    if (user == null) return;
 
     final roleDoc = FirebaseFirestore.instance.collection('user_roles').doc(user.uid);
     final snap = await roleDoc.get();
@@ -83,16 +88,19 @@ class _UploadProductPageState extends State<UploadProductPage> {
     }
 
     if (!_formKey.currentState!.validate()) return;
+    if (_imageFiles.isEmpty && _existingImageUrls.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please upload at least one image')),
+      );
+      return;
+    }
 
     final name = _nameController.text.trim();
-    final priceText = _priceController.text.trim();
-    final price = double.tryParse(priceText) ?? 0;
+    final price = double.tryParse(_priceController.text.trim()) ?? 0;
     final desc = _descriptionController.text.trim();
 
-    String? imageUrl = _existingImageUrl;
-    if (_imageFile != null) {
-      imageUrl = await _uploadToStorage();
-    }
+    final uploadedUrls = await _uploadToStorage();
+    final allImageUrls = [..._existingImageUrls, ...uploadedUrls];
 
     final now = FieldValue.serverTimestamp();
     final data = {
@@ -100,12 +108,10 @@ class _UploadProductPageState extends State<UploadProductPage> {
       'price': price,
       'type': _category,
       'description': desc,
-      'image': imageUrl != null ? [imageUrl] : [],
+      'image': allImageUrls,
       'edited': now,
     };
-    if (widget.docId.isEmpty) {
-      data['created'] = now;
-    }
+    if (widget.docId.isEmpty) data['created'] = now;
 
     try {
       final coll = FirebaseFirestore.instance.collection('products');
@@ -132,20 +138,50 @@ class _UploadProductPageState extends State<UploadProductPage> {
     _descriptionController.clear();
     setState(() {
       _category = null;
-      _imageFile = null;
-      _existingImageUrl = null;
+      _imageFiles = [];
+      _existingImageUrls = [];
     });
     _scrollController.animateTo(0, duration: const Duration(milliseconds: 300), curve: Curves.easeOut);
   }
 
   Widget _buildImagePreview() {
-    if (_imageFile != null) {
-      return Image.file(_imageFile!, height: 100, fit: BoxFit.cover);
+    final previews = <Widget>[];
+
+    for (var i = 0; i < _existingImageUrls.length; i++) {
+      final url = _existingImageUrls[i];
+      previews.add(Stack(
+        children: [
+          Image.network(url, height: 100, width: 100, fit: BoxFit.cover),
+          Positioned(
+            top: 0,
+            right: 0,
+            child: GestureDetector(
+              onTap: () => setState(() => _existingImageUrls.removeAt(i)),
+              child: const Icon(Icons.close, color: Colors.red),
+            ),
+          )
+        ],
+      ));
     }
-    if (_existingImageUrl != null) {
-      return Image.network(_existingImageUrl!, height: 100, fit: BoxFit.cover);
+
+    for (var i = 0; i < _imageFiles.length; i++) {
+      final file = _imageFiles[i];
+      previews.add(Stack(
+        children: [
+          Image.file(file, height: 100, width: 100, fit: BoxFit.cover),
+          Positioned(
+            top: 0,
+            right: 0,
+            child: GestureDetector(
+              onTap: () => setState(() => _imageFiles.removeAt(i)),
+              child: const Icon(Icons.close, color: Colors.red),
+            ),
+          )
+        ],
+      ));
     }
-    return const Icon(Icons.upload, size: 40, color: Colors.grey);
+
+    return Wrap(spacing: 8, runSpacing: 8, children: previews);
   }
 
   InputDecoration _inputDecoration(String hint) => InputDecoration(
@@ -161,7 +197,7 @@ class _UploadProductPageState extends State<UploadProductPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Upload Product')),
+      appBar: AppBar(title: const Text('Upload New Product')),
       body: Padding(
         padding: const EdgeInsets.all(16),
         child: Form(
@@ -169,9 +205,6 @@ class _UploadProductPageState extends State<UploadProductPage> {
           child: ListView(
             controller: _scrollController,
             children: [
-              Text(widget.docId.isEmpty ? 'Create a new product' : 'Edit your product'),
-              const SizedBox(height: 16),
-              const Text('Product Name', style: TextStyle(fontWeight: FontWeight.bold)),
               const SizedBox(height: 6),
               TextFormField(
                 controller: _nameController,
@@ -181,50 +214,34 @@ class _UploadProductPageState extends State<UploadProductPage> {
               const SizedBox(height: 16),
               Row(children: [
                 Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text('Category', style: TextStyle(fontWeight: FontWeight.bold)),
-                      const SizedBox(height: 6),
-                      DropdownButtonFormField<String>(
-                        value: _category,
-                        decoration: _inputDecoration('Select category'),
-                        items: ['accommodation', 'nature', 'activity']
-                            .map((c) => DropdownMenuItem(value: c, child: Text(c)))
-                            .toList(),
-                        onChanged: (c) => setState(() => _category = c),
-                        validator: (v) => v == null ? 'Select a category' : null,
-                      ),
-                    ],
+                  child: DropdownButtonFormField<String>(
+                    value: _category,
+                    decoration: _inputDecoration('Select category'),
+                    items: ['accommodation', 'nature', 'activity']
+                        .map((c) => DropdownMenuItem(value: c, child: Text(c)))
+                        .toList(),
+                    onChanged: (c) => setState(() => _category = c),
+                    validator: (v) => v == null ? 'Select a category' : null,
                   ),
                 ),
                 const SizedBox(width: 16),
                 Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text('Price (per pax/day)', style: TextStyle(fontWeight: FontWeight.bold)),
-                      const SizedBox(height: 6),
-                      TextFormField(
-                        controller: _priceController,
-                        decoration: _inputDecoration('Enter price'),
-                        keyboardType: TextInputType.number,
-                        validator: (v) => v == null || v.isEmpty ? 'Enter price' : null,
-                      ),
-                    ],
+                  child: TextFormField(
+                    controller: _priceController,
+                    decoration: _inputDecoration('Enter price'),
+                    keyboardType: TextInputType.number,
+                    validator: (v) => v == null || v.isEmpty ? 'Enter price' : null,
                   ),
                 ),
               ]),
               const SizedBox(height: 16),
-              const Text('Description', style: TextStyle(fontWeight: FontWeight.bold)),
-              const SizedBox(height: 6),
               TextFormField(
                 controller: _descriptionController,
                 decoration: _inputDecoration('Describe your product'),
                 maxLines: 3,
               ),
               const SizedBox(height: 16),
-              const Text('Upload Image', style: TextStyle(fontWeight: FontWeight.bold)),
+              const Text('Upload Images (max 5)', style: TextStyle(fontWeight: FontWeight.bold)),
               const SizedBox(height: 8),
               GestureDetector(
                 onTap: _pickImage,
@@ -235,9 +252,11 @@ class _UploadProductPageState extends State<UploadProductPage> {
                     borderRadius: BorderRadius.circular(12),
                   ),
                   alignment: Alignment.center,
-                  child: _buildImagePreview(),
+                  child: const Icon(Icons.upload, size: 40, color: Colors.grey),
                 ),
               ),
+              const SizedBox(height: 8),
+              _buildImagePreview(),
               const SizedBox(height: 24),
               Row(children: [
                 Expanded(

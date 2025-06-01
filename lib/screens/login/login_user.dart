@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
@@ -6,6 +7,8 @@ import 'package:trombol_apk/screens/homepage/explore.dart';
 import 'package:trombol_apk/screens/login/create_acc.dart';
 import 'package:trombol_apk/screens/login/forgot_pwd.dart';
 import 'package:trombol_apk/screens/login/admin_login.dart';
+import 'package:trombol_apk/screens/seller/dashboard.dart';
+import 'package:trombol_apk/screens/seller/seller_main.dart';
 
 class LoginUser extends StatelessWidget {
   const LoginUser({super.key});
@@ -55,14 +58,27 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => _isLoading = true);
 
     try {
-      await FirebaseAuth.instance
+      final credential = await FirebaseAuth.instance
           .signInWithEmailAndPassword(email: email, password: password);
+
+      final user = credential.user;
+      if (user == null) throw FirebaseAuthException(code: 'unknown');
+
+      final doc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user.uid)
+          .get();
+
+      final isAdmin = doc.data()?['isAdmin'] == true;
 
       if (!mounted) return;
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (_) => const ExploreToday()),
+        MaterialPageRoute(
+          builder: (_) => isAdmin ? const SellerMain() : const ExploreToday(),
+        ),
       );
+
     } on FirebaseAuthException catch (e) {
       if (!mounted) return;
       final message = switch (e.code) {
