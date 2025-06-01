@@ -39,6 +39,7 @@ class _EditProductPageState extends State<EditProductPage>
   void initState() {
     super.initState();
     final p = widget.product;
+
     _nameController.text = p['name'] ?? '';
     final rawPrice = p['prod_pricePerPax'] ?? p['price'];
     _priceController.text = rawPrice != null ? rawPrice.toString() : '';
@@ -50,6 +51,7 @@ class _EditProductPageState extends State<EditProductPage>
     if (dates != null) {
       _unavailableDates = dates.map((d) => DateTime.parse(d.toString())).toList();
     }
+
   }
 
   Future<void> _pickImage() async {
@@ -86,6 +88,7 @@ class _EditProductPageState extends State<EditProductPage>
     final allImages = [..._existingImageUrls, ...uploadedUrls];
 
     final products = {
+
       'name': name,
       'price': price,
       'type': _category,
