@@ -1,31 +1,98 @@
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'available_date.dart';
 
-class TourDetailPage extends StatelessWidget {
+class TourDetailPage extends StatefulWidget {
   final Map<String, dynamic> tourData;
 
   const TourDetailPage({super.key, required this.tourData});
 
   @override
+  State<TourDetailPage> createState() => _TourDetailPageState();
+}
+
+class _TourDetailPageState extends State<TourDetailPage> {
+  late List<String> images;
+  late String title;
+  late String description;
+  late String location;
+  late String address;
+  late double price;
+  bool isLiked = false;
+
+  @override
+  void initState() {
+    super.initState();
+    final data = widget.tourData;
+    images = (data['image'] as List?)?.cast<String>() ?? [];
+    title = data['name'] ?? 'No title';
+    description = data['description'] ?? 'No description';
+    location = data['location'] ?? 'Unknown location';
+    address = data['address'] ?? '';
+    price = double.tryParse(data['price'].toString()) ?? 0.0;
+    _loadLikedState();
+  }
+
+  Future<void> _loadLikedState() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid == null) return;
+
+    final doc = await FirebaseFirestore.instance.collection('users').doc(uid).get();
+    final liked = List<String>.from(doc.data()?['likedProducts'] ?? []);
+    final id = widget.tourData['id']; // Ensure this ID is passed in `tourData`
+    setState(() {
+      isLiked = id != null && liked.contains(id);
+    });
+  }
+
+  Future<void> _toggleLike() async {
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    final id = widget.tourData['id'];
+    if (uid == null || id == null) return;
+
+    final ref = FirebaseFirestore.instance.collection('users').doc(uid);
+    setState(() => isLiked = !isLiked);
+
+    await ref.update({
+      'likedProducts': isLiked
+          ? FieldValue.arrayUnion([id])
+          : FieldValue.arrayRemove([id]),
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
-    // Defensive fallback if a key is missing:
-    final imagePath = tourData['image'] as String? ?? 'assets/images/borneo_happy_farm.png';
-    final title     = tourData['title'] as String? ?? 'No title';
-    final price     = tourData['price'] as String? ?? '0';
+    final mainImage = images.isNotEmpty ? images.first : 'https://via.placeholder.com/150';
+    final screenHeight = MediaQuery.of(context).size.height;
+    final imageHeight = screenHeight * 0.4;
 
     return Scaffold(
       body: Stack(
         children: [
+
           ListView(
             children: [
               Stack(
                 children: [
-                  Image.asset(
-                    imagePath,
+                  Image.network(
+                    mainImage,
                     width: double.infinity,
-                    height: 250,
+                    height: imageHeight,
                     fit: BoxFit.cover,
+                    loadingBuilder: (context, child, loadingProgress) {
+                      if (loadingProgress == null) return child;
+                      return const SizedBox(
+                        height: 250,
+                        child: Center(child: CircularProgressIndicator()),
+                      );
+                    },
+                    errorBuilder: (_, __, ___) => Container(
+                      height: 250,
+                      color: Colors.grey[300],
+                      child: const Center(child: Icon(Icons.broken_image)),
+                    ),
                   ),
                   Positioned(
                     top: 40,
@@ -37,13 +104,12 @@ class TourDetailPage extends StatelessWidget {
                   ),
                   Positioned(
                     top: 40,
-                    right: 70,
-                    child: _circleIconButton(icon: Icons.share),
-                  ),
-                  Positioned(
-                    top: 40,
                     right: 16,
-                    child: _circleIconButton(icon: Icons.favorite_border),
+                    child: _circleIconButton(
+                      icon: isLiked ? Icons.favorite : Icons.favorite_border,
+                      onPressed: _toggleLike,
+                      color: isLiked ? Colors.red : Colors.black,
+                    ),
                   ),
                 ],
               ),
@@ -55,13 +121,13 @@ class TourDetailPage extends StatelessWidget {
                     Row(
                       children: [
                         Expanded(
-                          child: Text(
-                            title,
-                            style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-                          ),
+                          child: Text(title, style: const TextStyle(fontSize: 25, fontWeight: FontWeight.bold)),
                         ),
                         const SizedBox(width: 8),
-                        _roundedSmallBox('+100 Photos', context),
+                        GestureDetector(
+                          onTap: () => _showGallery(context),
+                          child: _roundedSmallBox('+${images.length} Photos', context),
+                        ),
                       ],
                     ),
                     const SizedBox(height: 8),
@@ -69,62 +135,30 @@ class TourDetailPage extends StatelessWidget {
                     const SizedBox(height: 24),
                     _sectionTitle('About'),
                     const SizedBox(height: 8),
-                    const Text(
-                      'Lorem ipsum dolor sit amet, consectetur adipiscing elit. '
-                          'Consectetur condimentum morbi non egestas enim amet sagittis. '
-                          'Proin sed aliquet rhoncus ut pellentesque ullamcorper sit eget ac. '
-                          'Sit nisi, cras amet varius eget egestas pellentesque. '
-                          'Cursus gravida euismod non...',
-                    ),
-                    const SizedBox(height: 8),
-                    const Text('Read all', style: TextStyle(color: Colors.blue)),
-                    const SizedBox(height: 24),
-                    const Divider(),
-                    _sectionTitle('What is included'),
-                    const SizedBox(height: 16),
-                    _includedItems(context),
-                    const SizedBox(height: 24),
-                    const Divider(),
-                    _sectionTitle('Where will you stay'),
-                    const SizedBox(height: 8),
-                    _buildGoogleMapsPreview(),
-                    const SizedBox(height: 8),
-                    const Text('Borneo Happy Farm'),
-                    const Text('Kuching, Sarawak, Malaysia'),
+                    Text(description),
                     const SizedBox(height: 24),
                     const Divider(),
                     _sectionTitle('Reviews'),
                     const SizedBox(height: 8),
                     _buildReviewItem('Mak Limah', 'Good Place', 'Okay okay je price not bad'),
-                    _buildReviewItem('Walid\'s Wife', 'Good Place', 'Not bad but not good lah'),
-                    const SizedBox(height: 16),
-                    ElevatedButton(
-                      onPressed: () {},
-                      style: ElevatedButton.styleFrom(
-                        foregroundColor: Colors.black,
-                        backgroundColor: Colors.white,
-                        side: const BorderSide(color: Colors.black),
-                        minimumSize: const Size(double.infinity, 48),
-                      ),
-                      child: const Text('See all +97 reviews'),
-                    ),
+                    _buildReviewItem("Walid's Wife", 'Good Place', 'Not bad but not good lah'),
                     const SizedBox(height: 24),
                     const Divider(),
                     _sectionTitle('People frequently ask'),
                     const SizedBox(height: 8),
-                    _buildFAQItem('About this place', 'Lorem ipsum dolor sit amet, consectetur adipiscing elit.'),
-                    _buildFAQItem('Terms and Conditions', 'Lorem ipsum dolor sit amet, consectetur adipiscing elit.'),
-                    _buildFAQItem('Cancellation Policy', 'Lorem ipsum dolor sit amet, consectetur adipiscing elit.'),
+                    _buildFAQItem('About this place', 'Lorem ipsum dolor sit amet.'),
+                    _buildFAQItem('Terms and Conditions', 'Lorem ipsum dolor sit amet.'),
+                    _buildFAQItem('Cancellation Policy', 'Lorem ipsum dolor sit amet.'),
                     const SizedBox(height: 80),
                   ],
                 ),
               ),
             ],
           ),
-
-          // Bottom bar
           Positioned(
-            bottom: 0, left: 0, right: 0,
+            bottom: 0,
+            left: 0,
+            right: 0,
             child: Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
@@ -135,11 +169,12 @@ class TourDetailPage extends StatelessWidget {
                 children: [
                   Expanded(
                     child: Text(
-                      "$price/Person",
+                      'RM${price.toStringAsFixed(2)}/Person',
                       style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Theme.of(context).colorScheme.onSurface),
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Theme.of(context).colorScheme.onSurface,
+                      ),
                     ),
                   ),
                   ElevatedButton(
@@ -164,34 +199,66 @@ class TourDetailPage extends StatelessWidget {
     );
   }
 
-  Widget _buildGoogleMapsPreview() {
-    return GestureDetector(
-      onTap: () async {
-        const url = 'https://goo.gl/maps/2dCjdRfwRzbpM3G79';
-        if (await canLaunchUrl(Uri.parse(url))) {
-          await launchUrl(Uri.parse(url));
-        }
-      },
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(16),
-        child: Image.network(
-          'https://maps.googleapis.com/maps/api/staticmap?center=1.467022,110.239303&zoom=15&size=600x300',
-          height: 200,
-          width: double.infinity,
-          fit: BoxFit.cover,
+  void _showGallery(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (_) => Dialog(
+        insetPadding: EdgeInsets.zero,
+        backgroundColor: Colors.black,
+        child: Stack(
+          children: [
+            PageView.builder(
+              itemCount: images.length,
+              itemBuilder: (_, index) {
+                return InteractiveViewer(
+                  child: Center(
+                    child: Image.network(
+                      images[index],
+                      fit: BoxFit.contain,
+                    ),
+                  ),
+                );
+              },
+            ),
+            Positioned(
+              top: 40,
+              right: 16,
+              child: IconButton(
+                icon: const Icon(Icons.close, color: Colors.white, size: 30),
+                onPressed: () => Navigator.pop(context),
+              ),
+            ),
+          ],
         ),
       ),
     );
   }
 
-  Widget _circleIconButton({required IconData icon, VoidCallback? onPressed}) =>
+  Widget _buildGoogleMapsPreview() => GestureDetector(
+    onTap: () async {
+      const url = 'https://goo.gl/maps/2dCjdRfwRzbpM3G79';
+      if (await canLaunchUrl(Uri.parse(url))) {
+        await launchUrl(Uri.parse(url));
+      }
+    },
+    child: ClipRRect(
+      borderRadius: BorderRadius.circular(16),
+      child: Image.network(
+        'https://maps.googleapis.com/maps/api/staticmap?center=1.467022,110.239303&zoom=15&size=600x300',
+        height: 200,
+        width: double.infinity,
+        fit: BoxFit.cover,
+      ),
+    ),
+  );
+
+  Widget _circleIconButton({required IconData icon, VoidCallback? onPressed, Color color = Colors.black}) =>
       CircleAvatar(
         backgroundColor: Colors.white,
-        child: IconButton(icon: Icon(icon, color: Colors.black), onPressed: onPressed),
+        child: IconButton(icon: Icon(icon, color: color), onPressed: onPressed),
       );
 
-  Widget _sectionTitle(String title) =>
-      Text(title, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold));
+  Widget _sectionTitle(String title) => Text(title, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold));
 
   Widget _ratingRow() => const Row(
     children: [
@@ -209,15 +276,16 @@ class TourDetailPage extends StatelessWidget {
     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
     decoration: BoxDecoration(
       color: Theme.of(context).brightness == Brightness.dark
-      ? Colors.grey.shade800
-      : Colors.grey.shade300,
+          ? Colors.grey.shade800
+          : Colors.grey.shade300,
       borderRadius: BorderRadius.circular(12),
     ),
     child: Text(text, style: TextStyle(fontSize: 12, color: Theme.of(context).colorScheme.onSurface)),
   );
 
   Widget _includedItems(BuildContext context) => Wrap(
-    spacing: 12, runSpacing: 12,
+    spacing: 12,
+    runSpacing: 12,
     children: [
       _includedCard(Icons.directions_bus, 'Bus', 'Transportation', context),
       _includedCard(Icons.access_time, '2 day 1 night', 'Duration', context),
@@ -230,9 +298,7 @@ class TourDetailPage extends StatelessWidget {
     padding: const EdgeInsets.symmetric(vertical: 12),
     decoration: BoxDecoration(
       border: Border.all(
-          color: Theme.of(context).brightness == Brightness.dark
-              ? Colors.grey.shade700
-              : Colors.grey.shade300,
+        color: Theme.of(context).brightness == Brightness.dark ? Colors.grey.shade700 : Colors.grey.shade300,
       ),
       borderRadius: BorderRadius.circular(16),
       color: Theme.of(context).colorScheme.surface,
@@ -252,11 +318,12 @@ class TourDetailPage extends StatelessWidget {
         ),
         const SizedBox(height: 4),
         Text(
-            subtitle,
-            style: TextStyle(
-                fontSize: 13,
-                color: Theme.of(context).colorScheme.onSurface.withAlpha(178),
-            )),
+          subtitle,
+          style: TextStyle(
+            fontSize: 13,
+            color: Theme.of(context).colorScheme.onSurface.withAlpha(178),
+          ),
+        ),
       ],
     ),
   );
@@ -286,4 +353,5 @@ class TourDetailPage extends StatelessWidget {
     subtitle: Text(description, maxLines: 1, overflow: TextOverflow.ellipsis),
     trailing: const Icon(Icons.arrow_forward_ios, size: 16),
   );
+
 }
