@@ -100,6 +100,7 @@ class _CreateAccState extends State<CreateAcc> {
         context,
         MaterialPageRoute(builder: (_) => const CreateAccountSuccess()),
       );
+
     } on FirebaseAuthException catch (e) {
       setState(() => _isLoading = false);
       _showSnackBar('Auth error: ${e.message ?? e.code}', isError: true);

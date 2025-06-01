@@ -1,4 +1,6 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:trombol_apk/screens/login/auth_gate.dart';
 import 'package:trombol_apk/screens/onboarding/onboarding1.dart';
 import 'dashboard.dart';
 import 'upload_product.dart';
@@ -39,20 +41,11 @@ class _SellerMainState extends State<SellerMain> {
         //   'prod_desc': 'Test product details',
         //   'image': 'assets/images/atv.png',
         // },
-        prod_name: '', docId: '',
+        name: '', docId: '',
       ),
     ];
 
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.logout, color: Colors.red),
-          onPressed: () => _logout(context),
-        ),
-      ),
-
       body: IndexedStack(
         index: _currentIndex,
         children: pages,
@@ -63,37 +56,53 @@ class _SellerMainState extends State<SellerMain> {
         selectedItemColor: Colors.teal,
         unselectedItemColor: Colors.grey,
         currentIndex: _currentIndex,
-        onTap: (i) => setState(() => _currentIndex = i),
+        onTap: (i) {
+          if (i == 4) {
+            _logout(context);
+          } else {
+            setState(() => _currentIndex = i);
+          }
+        },
         items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: "Home"),
+          BottomNavigationBarItem(icon: Icon(Icons.home), label: "Dash"),
           BottomNavigationBarItem(icon: Icon(Icons.upload), label: "Upload"),
           BottomNavigationBarItem(icon: Icon(Icons.book_online), label: "Bookings"),
           BottomNavigationBarItem(icon: Icon(Icons.list), label: "Product List"),
+          BottomNavigationBarItem(icon: Icon(Icons.logout, color: Colors.red,), label: "Logout"),
         ],
       ),
     );
   }
 
-  void _logout(BuildContext context) {
-    showDialog<bool>(
+  void _logout(BuildContext context) async {
+    final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Logout'),
         content: const Text('Are you sure you want to logout?'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
           TextButton(
-            onPressed: () {
-              Navigator.pop(ctx, true);
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(builder: (_) => const Onboarding1()),
-              );
-            },
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
             child: const Text('Logout', style: TextStyle(color: Colors.red)),
           ),
         ],
       ),
     );
+
+    if (confirm == true) {
+      await FirebaseAuth.instance.signOut();
+
+      // Wait for sign out to complete, then redirect
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (_) => const AuthGate()),
+            (_) => false,
+      );
+    }
   }
+
 }

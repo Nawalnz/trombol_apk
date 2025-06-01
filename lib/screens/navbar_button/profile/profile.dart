@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 // import "package:firebase_auth/firebase_auth.dart";
 import 'package:trombol_apk/screens/onboarding/onboarding1.dart';
@@ -100,14 +101,16 @@ class ProfilePage extends StatelessWidget {
 
           // Logout Button
           ElevatedButton(
-            onPressed: () {
-              // Navigate to onboarding and clear previous pages
+            onPressed: () async {
+              await FirebaseAuth.instance.signOut();
+              // Navigate to onboarding and clear all routes
               Navigator.pushAndRemoveUntil(
                 context,
                 MaterialPageRoute(builder: (context) => const Onboarding1()),
                     (route) => false,
               );
             },
+
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF085374),
               minimumSize: const Size.fromHeight(50),

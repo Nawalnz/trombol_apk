@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
@@ -5,18 +6,14 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:trombol_apk/screens/homepage/explore.dart';
 import 'package:trombol_apk/screens/login/create_acc.dart';
 import 'package:trombol_apk/screens/login/forgot_pwd.dart';
-import 'package:trombol_apk/screens/login/admin_login.dart';
+import 'package:trombol_apk/screens/seller/seller_main.dart';
 
 class LoginUser extends StatelessWidget {
   const LoginUser({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData.light(),
-      home: const LoginScreen(),
-    );
+    return const LoginScreen();
   }
 }
 
@@ -42,7 +39,7 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _handleLogin() async {
-    final email    = _emailController.text.trim();
+    final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
 
     if (email.isEmpty || password.isEmpty) {
@@ -55,22 +52,22 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => _isLoading = true);
 
     try {
-      await FirebaseAuth.instance
-          .signInWithEmailAndPassword(email: email, password: password);
-
-      if (!mounted) return;
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const ExploreToday()),
+      await FirebaseAuth.instance.signInWithEmailAndPassword(
+        email: email,
+        password: password,
       );
+
+      // ✅ DON'T navigate manually here
+      // AuthGate will automatically listen to authStateChanges
+      // and route accordingly
+
     } on FirebaseAuthException catch (e) {
-      if (!mounted) return;
       final message = switch (e.code) {
-        'user-not-found'  => 'No user found for that email.',
-        'wrong-password'  => 'Wrong password provided.',
-        'invalid-email'   => 'That email address is invalid.',
-        'user-disabled'   => 'This user has been disabled.',
-        _                 => 'Login failed. ${e.message}',
+        'user-not-found' => 'No user found for that email.',
+        'wrong-password' => 'Wrong password provided.',
+        'invalid-email' => 'That email address is invalid.',
+        'user-disabled' => 'This user has been disabled.',
+        _ => 'Login failed. ${e.message}',
       };
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(message)),
@@ -102,32 +99,32 @@ class _LoginScreenState extends State<LoginScreen> {
                     _buildCreateAccount(),
 
                     // NEW: Admin login link
-                    const SizedBox(height: 12),
-                    GestureDetector(
-                      onTap: () {
-                        if (!mounted) return;
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => const LoginAdmin(),
-                          ),
-                        );
-                      },
-                      child: const Text.rich(
-                        TextSpan(
-                          text: 'Are you an Admin? ',
-                          children: [
-                            TextSpan(
-                              text: 'Login using Admin ID',
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: Colors.black,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
+                    // const SizedBox(height: 12),
+                    // GestureDetector(
+                    //   onTap: () {
+                    //     if (!mounted) return;
+                    //     Navigator.push(
+                    //       context,
+                    //       MaterialPageRoute(
+                    //         builder: (_) => const LoginAdmin(),
+                    //       ),
+                    //     );
+                    //   },
+                    //   child: const Text.rich(
+                    //     TextSpan(
+                    //       text: 'Are you an Admin? ',
+                    //       children: [
+                    //         TextSpan(
+                    //           text: 'Login using Admin ID',
+                    //           style: TextStyle(
+                    //             fontWeight: FontWeight.bold,
+                    //             color: Colors.black,
+                    //           ),
+                    //         ),
+                    //       ],
+                    //     ),
+                    //   ),
+                    // ),
 
                     const SizedBox(height: 30),
                   ],
