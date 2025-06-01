@@ -3,7 +3,9 @@ import 'package:barcode_widget/barcode_widget.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 
 class BookingConfirmedPage extends StatelessWidget {
-  const BookingConfirmedPage({super.key});
+  final Map<String, dynamic> bookingData;
+
+  const BookingConfirmedPage({super.key, required this.bookingData, required Map<String, dynamic> data});
 
   @override
   Widget build(BuildContext context) {
@@ -45,16 +47,17 @@ class BookingConfirmedPage extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(width: 12),
-                        const Expanded(
+                        Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text('Koh Rong Samloem',
-                                  style: TextStyle(
+                              Text(
+                                  bookingData['tourTitle'] ?? 'Tour Title',
+                                  style: const TextStyle(
                                       fontWeight: FontWeight.bold,
                                       fontSize: 16)),
-                              SizedBox(height: 4),
-                              Row(
+                              const SizedBox(height: 4),
+                              const Row(
                                 children: [
                                   Icon(Icons.location_on,
                                       size: 14, color: Colors.grey),
@@ -74,13 +77,13 @@ class BookingConfirmedPage extends StatelessWidget {
                       ],
                     ),
                     const SizedBox(height: 16),
-                    buildLabelValue('Date', '11/4/22 - 15/4/22'),
-                    buildLabelValue('Guest Number', '2'),
-                    buildLabelValue('Order Number', '837nx38'),
+                    buildLabelValue('Date', bookingData['selectedDate'] ?? '-'),
+                    buildLabelValue('Guest Number', bookingData['guestCount'].toString()),
+                    buildLabelValue('Order Number', bookingData['bookingId'] ?? 'Unknown'),
                     const SizedBox(height: 16),
                     BarcodeWidget(
                       barcode: Barcode.code128(),
-                      data: '837nx38',
+                      data: bookingData['bookingId'] ?? '',
                       height: 70,
                       drawText: false,
                     ),

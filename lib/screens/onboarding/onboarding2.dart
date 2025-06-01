@@ -1,16 +1,31 @@
 import 'package:flutter/material.dart';
 import 'package:trombol_apk/screens/contactus.dart';
-import 'package:trombol_apk/screens/login/auth_gate.dart';
+import 'package:trombol_apk/screens/homepage/explore.dart';
 import 'package:trombol_apk/screens/login/login_user.dart';
 
-class Onboarding2 extends StatefulWidget {
-  const Onboarding2({super.key});
-
-  @override
-  State<Onboarding2> createState() => _Onboarding2State();
+void main() {
+  runApp(const MaterialApp(
+    debugShowCheckedModeBanner: false,
+    home: HomePage(),
+  ));
 }
 
-class _Onboarding2State extends State<Onboarding2> {
+class HomePage extends StatefulWidget {
+  const HomePage({super.key});
+
+  @override
+  State<HomePage> createState() => _HomePageState();
+}
+
+class _HomePageState extends State<HomePage> {
+  final PageController _pageController = PageController();
+  int _currentPage = 0;
+
+  final List<Widget> _pages = [
+    const Center(child: Text('Page 1', style: TextStyle(fontSize: 24, color: Colors.transparent))),
+    const Center(child: Text('Page 2', style: TextStyle(fontSize: 24, color: Colors.transparent))),
+  ];
+
   @override
   Widget build(BuildContext context) {
     return SizedBox.expand(
@@ -61,7 +76,15 @@ class _Onboarding2State extends State<Onboarding2> {
                     ],
                   ),
                 ),
-                const SizedBox(height: 20),
+                // SizedBox(height: 20),
+                // ListTile(
+                //   leading: Icon(Icons.travel_explore, size: 30.0),
+                //   title: Text('Explore Beach', style: TextStyle(fontSize: 20.0)),
+                //   onTap: () {
+                //     Navigator.pop(context);
+                //   },
+                // ),
+                SizedBox(height: 20),
                 ListTile(
                   leading: const Icon(Icons.connect_without_contact_rounded, size: 30.0),
                   title: const Text('Contact Us', style: TextStyle(fontSize: 20.0)),
@@ -80,11 +103,23 @@ class _Onboarding2State extends State<Onboarding2> {
             child: Padding(
               padding: const EdgeInsets.all(16.0),
               child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
+                  Expanded(
+                    child: PageView(
+                      controller: _pageController,
+                      onPageChanged: (index) {
+                        setState(() {
+                          _currentPage = index;
+                        });
+                      },
+                      children: _pages,
+                    ),
+                  ),
+                const Spacer(),
+
                   ColorFiltered(
                     colorFilter: const ColorFilter.mode(
-                      Colors.white,
+                      Colors.white, // Change to your desired color and opacity
                       BlendMode.srcATop,
                     ),
                     child: Image.asset(
@@ -94,15 +129,37 @@ class _Onboarding2State extends State<Onboarding2> {
                       fit: BoxFit.cover,
                     ),
                   ),
-                  const SizedBox(height: 32),
+                  const SizedBox(height: 32), // Optional: space from the bottom
+
+                  SizedBox(
+                    width: double.infinity,
+                    height: 56,
+                    // child: ElevatedButton(
+                    //   onPressed: () {
+                    //     Navigator.push(
+                    //       context,
+                    //       MaterialPageRoute(builder: (context) => const ExploreToday()),
+                    //     );
+                    //   },
+                    //
+                    // //   style: ElevatedButton.styleFrom(
+                    // //     backgroundColor: Color(0xFF085373),
+                    // //     shape: RoundedRectangleBorder(
+                    // //       borderRadius: BorderRadius.circular(12),
+                    // //     ),
+                    // //   ),
+                    // //   child: Text('Explore Beach', style: TextStyle(fontSize: 18, color: Colors.white)),
+                    // ),
+                  ),
+                  // SizedBox(height: 16),
                   SizedBox(
                     width: double.infinity,
                     height: 56,
                     child: ElevatedButton(
                       onPressed: () {
-                        Navigator.pushReplacement(
+                        Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (context) => const AuthGate()),
+                          MaterialPageRoute(builder: (context) => const LoginUser()),
                         );
                       },
                       style: ElevatedButton.styleFrom(
@@ -114,12 +171,25 @@ class _Onboarding2State extends State<Onboarding2> {
                       child: const Text('Log In', style: TextStyle(fontSize: 18, color: Colors.white)),
                     ),
                   ),
-                ],
-              ),
+                  const SizedBox(height: 24),
+                  // Rectangle page slider at the very bottom
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: List.generate(_pages.length, (index) {
+                      return AnimatedContainer(
+                        duration: const Duration(milliseconds: 300),
+                        margin: const EdgeInsets.symmetric(horizontal: 6),
+                        width: _currentPage == index ? 32 : 16,
+                        height: 8,
+                        decoration: BoxDecoration(
+                          color: _currentPage == index ? const Color(0xFF085373) : Colors.white54,
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                      );
+                    }),
+                  ),
+                ]),
             ),
-          ),
-        ),
-      ),
-    );
+          ))));
   }
 }

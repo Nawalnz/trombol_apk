@@ -1,16 +1,50 @@
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-// import "package:firebase_auth/firebase_auth.dart";
+import 'package:trombol_apk/screens/navbar_button/profile/edit_profile.dart';
+import 'package:trombol_apk/screens/navbar_button/profile/my_booking.dart';
+import 'package:trombol_apk/screens/navbar_button/profile/policies.dart';
+import 'package:trombol_apk/screens/navbar_button/profile/terms_condi.dart';
+import "package:firebase_auth/firebase_auth.dart";
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:trombol_apk/screens/onboarding/onboarding1.dart';
 import 'package:trombol_apk/theme_notifier.dart'; // Import your onboarding page
 import "package:provider/provider.dart";
 
-class ProfilePage extends StatelessWidget {
+class ProfilePage extends StatefulWidget {
   const ProfilePage({super.key});
 
   @override
+  State<ProfilePage> createState() => _ProfilePageState();
+}
+
+class _ProfilePageState extends State<ProfilePage> {
+  final User? user = FirebaseAuth.instance.currentUser;
+  String fullName = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchUserName();
+  }
+
+  Future<void> _fetchUserName() async {
+    if (user != null) {
+      DocumentSnapshot snapshot = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(user!.uid)
+          .get();
+
+      if (snapshot.exists) {
+        final data = snapshot.data() as Map<String, dynamic>;
+        setState(() {
+          fullName = '${data['firstName'] ?? ''} ${data['lastName'] ?? ''}'.trim();
+        });
+      }
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
-    //final User? user = FirebaseAuth.instance.currentUser;
+    final theme = Theme.of(context);
 
     return Scaffold(
       backgroundColor: Theme.of(context).colorScheme.surface, // Slightly off-white background
@@ -32,21 +66,23 @@ class ProfilePage extends StatelessWidget {
           // Profile Header
           Row(
             children: [
-              const CircleAvatar(
+              CircleAvatar(
                 radius: 32,
-                backgroundImage: NetworkImage('https://i.pravatar.cc/150?img=3'),
+                backgroundImage: user?.photoURL !=null
+                ? NetworkImage(user!.photoURL!)
+                : const AssetImage('assets/images/default_profile.png') as ImageProvider,
               ),
               const SizedBox(width: 12),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    "Melissa Doe",
+                    fullName.isNotEmpty ? fullName : "No name",
                     style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: Theme.of(context).textTheme.bodyLarge?.color),
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    "Mars, Solar System",
+                    user?.email ?? "No email",
                     style: TextStyle(fontSize: 14, color: Theme.of(context).textTheme.bodySmall?.color),
                   ),
                 ],
@@ -61,7 +97,7 @@ class ProfilePage extends StatelessWidget {
             padding: EdgeInsets.symmetric(vertical: 8),
             child: Text("Bookings", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
           ),
-          _buildSimpleListTile("My Bookings"),
+          _buildSimpleListTile(context, "My Bookings", const MyBookingsPage()),
 
           const SizedBox(height: 24),
           const Divider(),
@@ -71,7 +107,7 @@ class ProfilePage extends StatelessWidget {
             padding: EdgeInsets.symmetric(vertical: 8),
             child: Text("Account Settings", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
           ),
-          _buildSettingsTile(Icons.person, "Edit Profile"),
+          _buildSettingsTile(context, Icons.person, "Edit Profile", const EditProfilePage()),
           //_buildSettingsTile(Icons.dark_mode, "Color Mode"),
           Consumer<ThemeNotifier>(
             builder: (context, themeNotifier, child){
@@ -94,23 +130,21 @@ class ProfilePage extends StatelessWidget {
             padding: EdgeInsets.symmetric(vertical: 8),
             child: Text("Legalities", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
           ),
-          _buildSettingsTile(Icons.description, "Terms and Conditions", isExternal: true),
-          _buildSettingsTile(Icons.privacy_tip, "Privacy Policy", isExternal: true),
+          _buildSettingsTile(context, Icons.description, "Terms and Conditions", const TermsConditionsPage()),
+          _buildSettingsTile(context, Icons.privacy_tip, "Privacy Policy", const PrivacyPolicyPage()),
 
           const SizedBox(height: 32),
 
           // Logout Button
           ElevatedButton(
-            onPressed: () async {
-              await FirebaseAuth.instance.signOut();
-              // Navigate to onboarding and clear all routes
+            onPressed: () {
+              // Navigate to onboarding and clear previous pages
               Navigator.pushAndRemoveUntil(
                 context,
                 MaterialPageRoute(builder: (context) => const Onboarding1()),
                     (route) => false,
               );
             },
-
             style: ElevatedButton.styleFrom(
               backgroundColor: const Color(0xFF085374),
               minimumSize: const Size.fromHeight(50),
@@ -129,27 +163,27 @@ class ProfilePage extends StatelessWidget {
   }
 
   // Simple Tile without icons
-  Widget _buildSimpleListTile(String title) {
+  Widget _buildSimpleListTile(BuildContext context, String title, Widget page) {
     return ListTile(
       title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
       trailing: const Icon(Icons.arrow_forward_ios, size: 16),
       onTap: () {
-        // TODO: Implement navigation later
+        Navigator.push(context, MaterialPageRoute(builder: (context) => page));
       },
     );
   }
 
   // Tile with icon
-  Widget _buildSettingsTile(IconData icon, String title, {bool isExternal = false}) {
+  Widget _buildSettingsTile(BuildContext context, IconData icon, String title, Widget page) {
     return ListTile(
       leading: Icon(icon),
       title: Text(title, style: const TextStyle(fontWeight: FontWeight.normal)),
-      trailing: Icon(
-        isExternal ? Icons.open_in_new : Icons.arrow_forward_ios,
+      trailing: const Icon(
+        Icons.arrow_forward_ios,
         size: 16,
       ),
       onTap: () {
-        // TODO: Implement settings action later
+        Navigator.push(context, MaterialPageRoute(builder: (context)=> page));
       },
     );
   }

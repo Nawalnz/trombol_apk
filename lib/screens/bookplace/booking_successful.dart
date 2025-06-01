@@ -70,7 +70,7 @@ class BookingSuccessScreen extends StatelessWidget {
                       onPressed: () {
                         Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (context) => const BookingConfirmedPage()),
+                          MaterialPageRoute(builder: (context) => const BookingConfirmedPage(bookingData: {}, data: {},)),
                         );
                       },
                       child: const Text(

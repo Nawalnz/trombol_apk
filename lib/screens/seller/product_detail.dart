@@ -4,7 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'edit_product.dart';
 
 class ProductDetailPage extends StatelessWidget {
-  const ProductDetailPage({super.key, required String name, required String docId});
+  const ProductDetailPage({super.key, required String prod_name, required String docId});
 
   @override
   Widget build(BuildContext context) {
@@ -18,7 +18,7 @@ class ProductDetailPage extends StatelessWidget {
       body: StreamBuilder<QuerySnapshot>(
         stream: FirebaseFirestore.instance
             .collection('products')
-            .orderBy('created', descending: true)
+            .orderBy('prod_timeCreated', descending: true)
             .snapshots(),
         builder: (context, snapshot) {
           if (snapshot.hasError) {
@@ -38,10 +38,8 @@ class ProductDetailPage extends StatelessWidget {
             itemBuilder: (ctx, i) {
               final doc = docs[i];
               final data = doc.data()! as Map<String, dynamic>;
-              final imageList = data['image'] as List<dynamic>? ?? [];
-              final imageUrl = imageList.isNotEmpty ? imageList.first as String : '';
+              final imageUrl = data['image'] as String? ?? '';
               final isNetworkImage = imageUrl.startsWith('http');
-
 
               return Card(
                 margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -64,11 +62,11 @@ class ProductDetailPage extends StatelessWidget {
                     ),
                   ),
                   title: Text(
-                    data['name'] ?? '—',
+                    data['prod_name'] ?? '—',
                     style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
                   subtitle: Text(
-                    '${data['type'] ?? '—'} • \R\M${data['price'] ?? '—'}',
+                    '${data['prod_types'] ?? '—'} • \$${data['prod_price'] ?? '—'}',
                   ),
                   onTap: () {
                     // Navigate and pass product data + docId

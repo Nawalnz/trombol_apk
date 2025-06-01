@@ -1,6 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:trombol_apk/screens/messageverification.dart';
 
+void main() {
+  runApp(const MaterialApp(
+    debugShowCheckedModeBanner: false,
+    home: ContactUs(),
+  ));
+}
+
 class ContactUs extends StatefulWidget {
   const ContactUs({super.key});
 
@@ -46,7 +53,7 @@ class _ContactUsState extends State<ContactUs> {
       ),
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(14.0),
+          padding: const EdgeInsets.all(16.0),
           child: Form(
             key: _formKey,
             child: Column(
@@ -56,12 +63,12 @@ class _ContactUsState extends State<ContactUs> {
                 Center(
                   child: Image.asset(
                     'assets/images/Logo.png',
-                    width: 100,
-                    height: 100,
+                    width: 150,
+                    height: 150,
                     fit: BoxFit.contain,
                   ),
                 ),
-                const SizedBox(height: 2),
+                const SizedBox(height: 16),
                 // Contact Us label
                 const Center(
                   child: Text(
@@ -73,8 +80,19 @@ class _ContactUsState extends State<ContactUs> {
                     ),
                   ),
                 ),
-                const SizedBox(height: 5),
+                const SizedBox(height: 8),
                 // Description
+                const Center(
+                  child: Text(
+                    'We would love to hear from you! Send us a message and we will get to you as soon as possible.',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.black87,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+                const SizedBox(height: 24),
                 // Name field
                 TextFormField(
                   controller: _nameController,
@@ -125,7 +143,7 @@ class _ContactUsState extends State<ContactUs> {
                     ),
                     prefixIcon: const Icon(Icons.message),
                   ),
-                  maxLines: 9,
+                  maxLines: 10,
                   validator: (value) {
                     if (value == null || value.trim().isEmpty) {
                       return 'Please enter your message';
