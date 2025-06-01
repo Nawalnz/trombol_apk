@@ -2,6 +2,7 @@ import "package:firebase_auth/firebase_auth.dart";
 import "package:flutter/material.dart";
 import "package:firebase_core/firebase_core.dart";
 import 'package:trombol_apk/screens/bookplace/tour_detail.dart';
+import 'package:trombol_apk/screens/login/auth_gate.dart';
 import 'package:trombol_apk/screens/navbar_button/profile/profile.dart';
 import 'firebase_options.dart';
 import 'package:provider/provider.dart';
@@ -22,6 +23,7 @@ void main() async {
   await Firebase.initializeApp(
     options: DefaultFirebaseOptions.currentPlatform,
   );
+  await FirebaseAuth.instance.setPersistence(Persistence.LOCAL);
   final auth = FirebaseAuth.instance;
   if (auth.currentUser == null) { }
 
@@ -47,6 +49,7 @@ class _MyAppState extends State<MyApp> {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Trombol Paradise Beach',
+      home: AuthGate(),
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.teal, brightness: Brightness.light),
         useMaterial3: true,
@@ -58,15 +61,13 @@ class _MyAppState extends State<MyApp> {
       themeMode: themeNotifier.currentTheme, //from ThemeNotifier
 
       // --- static, no-arg routes ---
-      initialRoute: '/',
       routes: {
-        '/':            (c) => const Onboarding1(),
         '/next':        (c) => const Onboarding2(),
         '/explore':     (c) => const ExploreToday(),
         '/tour':        (c) => const TourDetailPage(tourData: {}),
         '/seller-main': (c) => const SellerMain(),
         '/bookings':    (c) => const BookingListPage(),
-        '/home':        (c) => const SellerDashboard(),
+        '/home':  (c) => const SellerDashboard(),
       },
 
       onGenerateRoute: (settings) {
@@ -84,7 +85,7 @@ class _MyAppState extends State<MyApp> {
             return MaterialPageRoute(
               builder: (_) => ProductDetailPage(
                 // product: args['product'] as Map<String, dynamic>,
-                docId: args['docId'] as String, prod_name: '',
+                docId: args['docId'] as String, name: '',
               ),
             );
 

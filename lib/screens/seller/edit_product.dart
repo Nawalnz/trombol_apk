@@ -38,13 +38,15 @@ class _EditProductPageState extends State<EditProductPage>
   void initState() {
     super.initState();
     final p = widget.product;
-    _nameController.text        = p['prod_name'] ?? '';
+    _nameController.text        = p['name'] ?? '';
     // support both price field keys
-    final rawPrice = p['prod_pricePerPax'] ?? p['prod_price'];
+    final rawPrice = p['prod_pricePerPax'] ?? p['price'];
     _priceController.text       = rawPrice != null ? rawPrice.toString() : '';
-    _descriptionController.text = p['prod_desc'] ?? '';
-    _category                   = p['prod_types'];
-    _existingImageUrl           = p['image'];
+    _descriptionController.text = p['description'] ?? '';
+    _category                   = p['type'];
+    final imageList = p['image'] as List<dynamic>? ?? [];
+    _existingImageUrl = imageList.isNotEmpty ? imageList.first as String : null;
+
   }
 
   Future<void> _pickImage() async {
@@ -75,12 +77,12 @@ class _EditProductPageState extends State<EditProductPage>
     }
 
     final products = {
-      'prod_name'        : name,
-      'prod_price'       : price,
-      'prod_types'       : _category,
-      'prod_desc'        : description,
+      'name'        : name,
+      'price'       : price,
+      'type'       : _category,
+      'description'        : description,
       'image'            : imageUrl,
-      'prod_lastUpdated' : FieldValue.serverTimestamp(),
+      'edited' : FieldValue.serverTimestamp(),
     };
 
     try {

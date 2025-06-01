@@ -13,11 +13,7 @@ class LoginUser extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData.light(),
-      home: const LoginScreen(),
-    );
+    return const LoginScreen();
   }
 }
 
@@ -43,7 +39,7 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   Future<void> _handleLogin() async {
-    final email    = _emailController.text.trim();
+    final email = _emailController.text.trim();
     final password = _passwordController.text.trim();
 
     if (email.isEmpty || password.isEmpty) {
@@ -56,35 +52,22 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => _isLoading = true);
 
     try {
-      final credential = await FirebaseAuth.instance
-          .signInWithEmailAndPassword(email: email, password: password);
-
-      final user = credential.user;
-      if (user == null) throw FirebaseAuthException(code: 'unknown');
-
-      final doc = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(user.uid)
-          .get();
-
-      final isAdmin = doc.data()?['isAdmin'] == true;
-
-      if (!mounted) return;
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (_) => isAdmin ? const SellerMain() : const ExploreToday(),
-        ),
+      await FirebaseAuth.instance.signInWithEmailAndPassword(
+        email: email,
+        password: password,
       );
 
+      // ✅ DON'T navigate manually here
+      // AuthGate will automatically listen to authStateChanges
+      // and route accordingly
+
     } on FirebaseAuthException catch (e) {
-      if (!mounted) return;
       final message = switch (e.code) {
-        'user-not-found'  => 'No user found for that email.',
-        'wrong-password'  => 'Wrong password provided.',
-        'invalid-email'   => 'That email address is invalid.',
-        'user-disabled'   => 'This user has been disabled.',
-        _                 => 'Login failed. ${e.message}',
+        'user-not-found' => 'No user found for that email.',
+        'wrong-password' => 'Wrong password provided.',
+        'invalid-email' => 'That email address is invalid.',
+        'user-disabled' => 'This user has been disabled.',
+        _ => 'Login failed. ${e.message}',
       };
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(message)),

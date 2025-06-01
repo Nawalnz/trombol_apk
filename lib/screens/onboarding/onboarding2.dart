@@ -99,7 +99,7 @@ class _Onboarding2State extends State<Onboarding2> {
                     height: 56,
                     child: ElevatedButton(
                       onPressed: () {
-                        Navigator.push(
+                        Navigator.pushReplacement(
                           context,
                           MaterialPageRoute(builder: (context) => const LoginUser()),
                         );

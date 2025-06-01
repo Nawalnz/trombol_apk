@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:trombol_apk/screens/onboarding/onboarding1.dart';
 import 'dashboard.dart';
@@ -39,7 +40,7 @@ class _SellerMainState extends State<SellerMain> {
         //   'prod_desc': 'Test product details',
         //   'image': 'assets/images/atv.png',
         // },
-        prod_name: '', docId: '',
+        name: '', docId: '',
       ),
     ];
 
@@ -62,7 +63,7 @@ class _SellerMainState extends State<SellerMain> {
           }
         },
         items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: "Home"),
+          BottomNavigationBarItem(icon: Icon(Icons.home), label: "Dash"),
           BottomNavigationBarItem(icon: Icon(Icons.upload), label: "Upload"),
           BottomNavigationBarItem(icon: Icon(Icons.book_online), label: "Bookings"),
           BottomNavigationBarItem(icon: Icon(Icons.list), label: "Product List"),
@@ -72,26 +73,29 @@ class _SellerMainState extends State<SellerMain> {
     );
   }
 
-  void _logout(BuildContext context) {
-    showDialog<bool>(
+  void _logout(BuildContext context) async {
+    final confirm = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text('Logout'),
         content: const Text('Are you sure you want to logout?'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancel')),
           TextButton(
-            onPressed: () {
-              Navigator.pop(ctx, true);
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(builder: (_) => const Onboarding1()),
-              );
-            },
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancel'),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
             child: const Text('Logout', style: TextStyle(color: Colors.red)),
           ),
         ],
       ),
     );
+
+    if (confirm == true) {
+      await FirebaseAuth.instance.signOut();
+      // AuthGate will now automatically redirect to onboarding/login
+    }
   }
+
 }
