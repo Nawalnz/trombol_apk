@@ -7,26 +7,6 @@ import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
-void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp();
-  runApp(const MyApp());
-}
-
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Upload Product',
-      theme: ThemeData(primarySwatch: Colors.teal),
-      home: const UploadProductPage(product: {}, docId: ''),
-    );
-  }
-}
-
-/// A page to create or edit a product, including image upload to Firebase Storage
 class UploadProductPage extends StatefulWidget {
   final Map<String, dynamic> product;
   final String docId;
@@ -37,8 +17,7 @@ class UploadProductPage extends StatefulWidget {
   State<UploadProductPage> createState() => _UploadProductPageState();
 }
 
-class _UploadProductPageState extends State<UploadProductPage>
-    with AutomaticKeepAliveClientMixin<UploadProductPage> {
+class _UploadProductPageState extends State<UploadProductPage> {
   final _formKey = GlobalKey<FormState>();
   final _scrollController = ScrollController();
 
@@ -55,16 +34,13 @@ class _UploadProductPageState extends State<UploadProductPage>
     super.initState();
     if (widget.docId.isNotEmpty) {
       final p = widget.product;
-      _nameController.text = p['prod_name'] ?? '';
-      _priceController.text = p['prod_price'] ?? '';
-      _descriptionController.text = p['prod_desc'] ?? '';
-      _category = p['prod_types'] as String?;
-      _existingImageUrl = p['image'] as String?;
+      _nameController.text = p['name'] ?? '';
+      _priceController.text = p['price']?.toString() ?? '';
+      _descriptionController.text = p['description'] ?? '';
+      _category = p['type'] as String?;
+      _existingImageUrl = (p['image'] as List?)?.isNotEmpty == true ? p['image'][0] : null;
     }
   }
-
-  @override
-  bool get wantKeepAlive => true;
 
   Future<void> _pickImage() async {
     final picker = ImagePicker();
@@ -79,46 +55,29 @@ class _UploadProductPageState extends State<UploadProductPage>
 
   Future<String?> _uploadToStorage() async {
     if (_imageFile == null) return null;
-    final fileName = '${DateTime.now().millisecondsSinceEpoch}_'
-        '${_imageFile!.path.split('/').last}';
-    final ref = FirebaseStorage.instance
-        .ref()
-        .child('product_images')
-        .child(fileName);
+    final fileName = '${DateTime.now().millisecondsSinceEpoch}_${_imageFile!.path.split('/').last}';
+    final ref = FirebaseStorage.instance.ref().child('product_images').child(fileName);
     final snapshot = await ref.putFile(_imageFile!);
     return snapshot.ref.getDownloadURL();
   }
 
-  /// UPDATED: Now simply reads user_roles/{uid}.isAdmin
   Future<void> _submitForm() async {
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('You must be signed in to upload products')),
       );
-
       return;
     }
 
-    // Read the isAdmin flag
-    final roleDoc = FirebaseFirestore.instance
-        .collection('user_roles')
-        .doc(user.uid);
-
-    try {
-      final snap = await roleDoc.get();
-      if (!snap.exists || snap.data()?['isAdmin'] != true) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Insufficient permissions: Admin access required'),
-            backgroundColor: Colors.red,
-          ),
-        );
-        return;
-      }
-    } catch (e) {
+    final roleDoc = FirebaseFirestore.instance.collection('user_roles').doc(user.uid);
+    final snap = await roleDoc.get();
+    if (!snap.exists || snap.data()?['isAdmin'] != true) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error checking admin status: $e')),
+        const SnackBar(
+          content: Text('Insufficient permissions: Admin access required'),
+          backgroundColor: Colors.red,
+        ),
       );
       return;
     }
@@ -126,7 +85,8 @@ class _UploadProductPageState extends State<UploadProductPage>
     if (!_formKey.currentState!.validate()) return;
 
     final name = _nameController.text.trim();
-    final price = _priceController.text.trim();
+    final priceText = _priceController.text.trim();
+    final price = double.tryParse(priceText) ?? 0;
     final desc = _descriptionController.text.trim();
 
     String? imageUrl = _existingImageUrl;
@@ -134,14 +94,18 @@ class _UploadProductPageState extends State<UploadProductPage>
       imageUrl = await _uploadToStorage();
     }
 
+    final now = FieldValue.serverTimestamp();
     final data = {
-      'prod_name': name,
-      'prod_price': price,
-      'prod_types': _category,
-      'prod_desc': desc,
-      'image': imageUrl,
-      'prod_timeCreated': FieldValue.serverTimestamp(),
+      'name': name,
+      'price': price,
+      'type': _category,
+      'description': desc,
+      'image': imageUrl != null ? [imageUrl] : [],
+      'edited': now,
     };
+    if (widget.docId.isEmpty) {
+      data['created'] = now;
+    }
 
     try {
       final coll = FirebaseFirestore.instance.collection('products');
@@ -171,11 +135,7 @@ class _UploadProductPageState extends State<UploadProductPage>
       _imageFile = null;
       _existingImageUrl = null;
     });
-    _scrollController.animateTo(
-      0,
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeOut,
-    );
+    _scrollController.animateTo(0, duration: const Duration(milliseconds: 300), curve: Curves.easeOut);
   }
 
   Widget _buildImagePreview() {
@@ -200,7 +160,6 @@ class _UploadProductPageState extends State<UploadProductPage>
 
   @override
   Widget build(BuildContext context) {
-    super.build(context);
     return Scaffold(
       appBar: AppBar(title: const Text('Upload Product')),
       body: Padding(
@@ -210,12 +169,7 @@ class _UploadProductPageState extends State<UploadProductPage>
           child: ListView(
             controller: _scrollController,
             children: [
-              Text(
-                widget.docId.isEmpty
-                    ? 'Create a new product'
-                    : 'Edit your product',
-                style: Theme.of(context).textTheme.bodyMedium,
-              ),
+              Text(widget.docId.isEmpty ? 'Create a new product' : 'Edit your product'),
               const SizedBox(height: 16),
               const Text('Product Name', style: TextStyle(fontWeight: FontWeight.bold)),
               const SizedBox(height: 6),
@@ -235,7 +189,7 @@ class _UploadProductPageState extends State<UploadProductPage>
                       DropdownButtonFormField<String>(
                         value: _category,
                         decoration: _inputDecoration('Select category'),
-                        items: ['Adventure', 'Relaxation', 'Nature']
+                        items: ['accommodation', 'nature', 'activity']
                             .map((c) => DropdownMenuItem(value: c, child: Text(c)))
                             .toList(),
                         onChanged: (c) => setState(() => _category = c),
@@ -249,7 +203,7 @@ class _UploadProductPageState extends State<UploadProductPage>
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text('Price', style: TextStyle(fontWeight: FontWeight.bold)),
+                      const Text('Price (per pax/day)', style: TextStyle(fontWeight: FontWeight.bold)),
                       const SizedBox(height: 6),
                       TextFormField(
                         controller: _priceController,
@@ -292,14 +246,9 @@ class _UploadProductPageState extends State<UploadProductPage>
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF004C6D),
                       padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
-                      ),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                     ),
-                    child: Text(
-                      widget.docId.isEmpty ? 'Create Product' : 'Save Changes',
-                      style: const TextStyle(color: Colors.white),
-                    ),
+                    child: Text(widget.docId.isEmpty ? 'Create Product' : 'Save Changes', style: const TextStyle(color: Colors.white)),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -309,9 +258,7 @@ class _UploadProductPageState extends State<UploadProductPage>
                     style: OutlinedButton.styleFrom(
                       side: const BorderSide(color: Color(0xFF004C6D)),
                       padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
-                      ),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
                     ),
                     child: const Text('Reset', style: TextStyle(color: Color(0xFF004C6D))),
                   ),

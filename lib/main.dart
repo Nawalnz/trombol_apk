@@ -61,7 +61,7 @@ class _MyAppState extends State<MyApp> {
       initialRoute: '/',
       routes: {
         '/':            (c) => const Onboarding1(),
-        '/next':        (c) => const HomePage(),
+        '/next':        (c) => const Onboarding2(),
         '/explore':     (c) => const ExploreToday(),
         '/tour':        (c) => const TourDetailPage(tourData: {}),
         '/seller-main': (c) => const SellerMain(),
