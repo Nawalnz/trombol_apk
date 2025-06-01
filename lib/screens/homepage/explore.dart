@@ -1,6 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import "package:flutter/material.dart";
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:trombol_apk/screens/bookplace/tour_detail.dart';
 import 'package:trombol_apk/screens/homepage/search.dart';
 import 'package:trombol_apk/screens/navbar_button/booking/booked_list.dart';
 import 'package:trombol_apk/screens/navbar_button/notification/notification.dart';
@@ -219,10 +220,26 @@ class _ExploreTodayContentState extends State<ExploreTodayContent> {
               final desc = data['description'] ?? 'No description';
               final productId = docs[index].id;
 
-              return Padding(
-                padding: const EdgeInsets.only(right: 15),
+              return GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (_) =>
+                          TourDetailPage(tourData: {
+                            'id': productId,
+                            'name': data['name'],
+                            'description': data['description'],
+                            'price': data['price'],
+                            'image': data['image'],
+                          })
+
+                    ),
+                  );
+                },
                 child: _buildCard(image, title, desc, productId),
               );
+
             },
           ),
         );
