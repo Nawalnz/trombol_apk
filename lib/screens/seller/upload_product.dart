@@ -2,31 +2,10 @@ import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 
-void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp();
-  runApp(const MyApp());
-}
-
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Upload Product',
-      theme: ThemeData(primarySwatch: Colors.teal),
-      home: const UploadProductPage(product: {}, docId: ''),
-    );
-  }
-}
-
-/// A page to create or edit a product, including image upload to Firebase Storage
 class UploadProductPage extends StatefulWidget {
   final Map<String, dynamic> product;
   final String docId;
@@ -37,75 +16,92 @@ class UploadProductPage extends StatefulWidget {
   State<UploadProductPage> createState() => _UploadProductPageState();
 }
 
-class _UploadProductPageState extends State<UploadProductPage>
-    with AutomaticKeepAliveClientMixin<UploadProductPage> {
+class _UploadProductPageState extends State<UploadProductPage> {
   final _formKey = GlobalKey<FormState>();
   final _scrollController = ScrollController();
 
   String? _category;
-  File? _imageFile;
-  String? _existingImageUrl;
+  List<File> _imageFiles = [];
+  List<String> _existingImageUrls = [];
 
   final _nameController = TextEditingController();
   final _priceController = TextEditingController();
   final _descriptionController = TextEditingController();
+
+  bool _isSubmitting = false;
 
   @override
   void initState() {
     super.initState();
     if (widget.docId.isNotEmpty) {
       final p = widget.product;
-      _nameController.text = p['prod_name'] ?? '';
-      _priceController.text = p['prod_price'] ?? '';
-      _descriptionController.text = p['prod_desc'] ?? '';
-      _category = p['prod_types'] as String?;
-      _existingImageUrl = p['image'] as String?;
+      _nameController.text = p['name'] ?? '';
+      _priceController.text = p['price']?.toString() ?? '';
+      _descriptionController.text = p['description'] ?? '';
+      _category = p['type'] as String?;
+      final imagesRaw = widget.product['image'];
+      if (imagesRaw is List) {
+        _existingImageUrls = imagesRaw.cast<String>();
+      } else if (imagesRaw is String) {
+        _existingImageUrls = [imagesRaw];
+      }
+
+    }
+  }
+      _nameController.text = p['name'] ?? '';
+      _priceController.text = p['price']?.toString() ?? '';
+      _descriptionController.text = p['description'] ?? '';
+      _category = p['type'] as String?;
+
+      final imagesRaw = widget.product['image'];
+      if (imagesRaw is List) {
+        _existingImageUrls = imagesRaw.cast<String>();
+      } else if (imagesRaw is String) {
+        _existingImageUrls = [imagesRaw];
+      }
+
     }
   }
 
-  @override
-  bool get wantKeepAlive => true;
-
   Future<void> _pickImage() async {
+    if (_imageFiles.length + _existingImageUrls.length >= 5) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('You can upload up to 5 images only')),
+      );
+      return;
+    }
+
     final picker = ImagePicker();
     final picked = await picker.pickImage(source: ImageSource.gallery);
     if (picked != null) {
       setState(() {
-        _imageFile = File(picked.path);
-        _existingImageUrl = null;
+        _imageFiles.add(File(picked.path));
       });
     }
   }
 
-  Future<String?> _uploadToStorage() async {
-    if (_imageFile == null) return null;
-    final fileName = '${DateTime.now().millisecondsSinceEpoch}_'
-        '${_imageFile!.path.split('/').last}';
-    final ref = FirebaseStorage.instance
-        .ref()
-        .child('product_images')
-        .child(fileName);
-    final snapshot = await ref.putFile(_imageFile!);
-    return snapshot.ref.getDownloadURL();
+  Future<List<String>> _uploadToStorage() async {
+    List<String> urls = [];
+    for (var imageFile in _imageFiles) {
+      final fileName = '${DateTime.now().millisecondsSinceEpoch}_${imageFile.path.split('/').last}';
+      final ref = FirebaseStorage.instance.ref().child('product_images').child(fileName);
+      final snapshot = await ref.putFile(imageFile);
+      final url = await snapshot.ref.getDownloadURL();
+      urls.add(url);
+    }
+    return urls;
   }
 
-  /// UPDATED: Now simply reads user_roles/{uid}.isAdmin
   Future<void> _submitForm() async {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('You must be signed in to upload products')),
-      );
+    if (_isSubmitting) return;
 
-      return;
-    }
-
-    // Read the isAdmin flag
-    final roleDoc = FirebaseFirestore.instance
-        .collection('user_roles')
-        .doc(user.uid);
+    setState(() => _isSubmitting = true);
 
     try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) return;
+
+      final roleDoc = FirebaseFirestore.instance.collection('users').doc(user.uid);
       final snap = await roleDoc.get();
       if (!snap.exists || snap.data()?['isAdmin'] != true) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -116,48 +112,51 @@ class _UploadProductPageState extends State<UploadProductPage>
         );
         return;
       }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Error checking admin status: $e')),
-      );
-      return;
-    }
 
-    if (!_formKey.currentState!.validate()) return;
+      if (!_formKey.currentState!.validate()) return;
+      if (_imageFiles.isEmpty && _existingImageUrls.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Please upload at least one image')),
+        );
+        return;
+      }
 
-    final name = _nameController.text.trim();
-    final price = _priceController.text.trim();
-    final desc = _descriptionController.text.trim();
+      final name = _nameController.text.trim();
+      final price = double.tryParse(_priceController.text.trim()) ?? 0;
+      final desc = _descriptionController.text.trim();
 
-    String? imageUrl = _existingImageUrl;
-    if (_imageFile != null) {
-      imageUrl = await _uploadToStorage();
-    }
+      final uploadedUrls = await _uploadToStorage();
+      final allImageUrls = [..._existingImageUrls, ...uploadedUrls];
 
-    final data = {
-      'prod_name': name,
-      'prod_price': price,
-      'prod_types': _category,
-      'prod_desc': desc,
-      'image': imageUrl,
-      'prod_timeCreated': FieldValue.serverTimestamp(),
-    };
+      final now = FieldValue.serverTimestamp();
+      final data = {
+        'name': name,
+        'price': price,
+        'type': _category,
+        'description': desc,
+        'image': allImageUrls,
+        'edited': now,
+      };
+      if (widget.docId.isEmpty) data['created'] = now;
 
-    try {
       final coll = FirebaseFirestore.instance.collection('products');
       if (widget.docId.isEmpty) {
         await coll.add(data);
       } else {
         await coll.doc(widget.docId).update(data);
       }
+
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Product saved successfully')),
       );
+
       _resetForm();
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Error saving product: $e')),
       );
+    } finally {
+      if (mounted) setState(() => _isSubmitting = false);
     }
   }
 
@@ -168,24 +167,50 @@ class _UploadProductPageState extends State<UploadProductPage>
     _descriptionController.clear();
     setState(() {
       _category = null;
-      _imageFile = null;
-      _existingImageUrl = null;
+      _imageFiles = [];
+      _existingImageUrls = [];
     });
-    _scrollController.animateTo(
-      0,
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeOut,
-    );
+    _scrollController.animateTo(0, duration: const Duration(milliseconds: 300), curve: Curves.easeOut);
   }
 
   Widget _buildImagePreview() {
-    if (_imageFile != null) {
-      return Image.file(_imageFile!, height: 100, fit: BoxFit.cover);
+    final previews = <Widget>[];
+
+    for (var i = 0; i < _existingImageUrls.length; i++) {
+      final url = _existingImageUrls[i];
+      previews.add(Stack(
+        children: [
+          Image.network(url, height: 100, width: 100, fit: BoxFit.cover),
+          Positioned(
+            top: 0,
+            right: 0,
+            child: GestureDetector(
+              onTap: () => setState(() => _existingImageUrls.removeAt(i)),
+              child: const Icon(Icons.close, color: Colors.red),
+            ),
+          )
+        ],
+      ));
     }
-    if (_existingImageUrl != null) {
-      return Image.network(_existingImageUrl!, height: 100, fit: BoxFit.cover);
+
+    for (var i = 0; i < _imageFiles.length; i++) {
+      final file = _imageFiles[i];
+      previews.add(Stack(
+        children: [
+          Image.file(file, height: 100, width: 100, fit: BoxFit.cover),
+          Positioned(
+            top: 0,
+            right: 0,
+            child: GestureDetector(
+              onTap: () => setState(() => _imageFiles.removeAt(i)),
+              child: const Icon(Icons.close, color: Colors.red),
+            ),
+          )
+        ],
+      ));
     }
-    return const Icon(Icons.upload, size: 40, color: Colors.grey);
+
+    return Wrap(spacing: 8, runSpacing: 8, children: previews);
   }
 
   InputDecoration _inputDecoration(String hint) => InputDecoration(
@@ -200,126 +225,110 @@ class _UploadProductPageState extends State<UploadProductPage>
 
   @override
   Widget build(BuildContext context) {
-    super.build(context);
     return Scaffold(
-      appBar: AppBar(title: const Text('Upload Product')),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Form(
-          key: _formKey,
-          child: ListView(
-            controller: _scrollController,
-            children: [
-              Text(
-                widget.docId.isEmpty
-                    ? 'Create a new product'
-                    : 'Edit your product',
-                style: Theme.of(context).textTheme.bodyMedium,
-              ),
-              const SizedBox(height: 16),
-              const Text('Product Name', style: TextStyle(fontWeight: FontWeight.bold)),
-              const SizedBox(height: 6),
-              TextFormField(
-                controller: _nameController,
-                decoration: _inputDecoration('Enter product name'),
-                validator: (v) => v == null || v.isEmpty ? 'Enter product name' : null,
-              ),
-              const SizedBox(height: 16),
-              Row(children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text('Category', style: TextStyle(fontWeight: FontWeight.bold)),
-                      const SizedBox(height: 6),
-                      DropdownButtonFormField<String>(
+      appBar: AppBar(title: const Text('Upload New Product')),
+      body: Stack(
+        children: [
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Form(
+              key: _formKey,
+              child: ListView(
+                controller: _scrollController,
+                children: [
+                  const SizedBox(height: 6),
+                  TextFormField(
+                    controller: _nameController,
+                    decoration: _inputDecoration('Enter product name'),
+                    validator: (v) => v == null || v.isEmpty ? 'Enter product name' : null,
+                  ),
+                  const SizedBox(height: 16),
+                  Row(children: [
+                    Expanded(
+                      child: DropdownButtonFormField<String>(
                         value: _category,
                         decoration: _inputDecoration('Select category'),
-                        items: ['Adventure', 'Relaxation', 'Nature']
+                        items: ['accommodation', 'nature', 'activity']
                             .map((c) => DropdownMenuItem(value: c, child: Text(c)))
                             .toList(),
                         onChanged: (c) => setState(() => _category = c),
                         validator: (v) => v == null ? 'Select a category' : null,
                       ),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const Text('Price', style: TextStyle(fontWeight: FontWeight.bold)),
-                      const SizedBox(height: 6),
-                      TextFormField(
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: TextFormField(
                         controller: _priceController,
                         decoration: _inputDecoration('Enter price'),
                         keyboardType: TextInputType.number,
                         validator: (v) => v == null || v.isEmpty ? 'Enter price' : null,
                       ),
-                    ],
+                    ),
+                  ]),
+                  const SizedBox(height: 16),
+                  TextFormField(
+                    controller: _descriptionController,
+                    decoration: _inputDecoration('Describe your product'),
+                    maxLines: 3,
                   ),
-                ),
-              ]),
-              const SizedBox(height: 16),
-              const Text('Description', style: TextStyle(fontWeight: FontWeight.bold)),
-              const SizedBox(height: 6),
-              TextFormField(
-                controller: _descriptionController,
-                decoration: _inputDecoration('Describe your product'),
-                maxLines: 3,
-              ),
-              const SizedBox(height: 16),
-              const Text('Upload Image', style: TextStyle(fontWeight: FontWeight.bold)),
-              const SizedBox(height: 8),
-              GestureDetector(
-                onTap: _pickImage,
-                child: Container(
-                  height: 100,
-                  decoration: BoxDecoration(
-                    border: Border.all(color: Colors.black26),
-                    borderRadius: BorderRadius.circular(12),
+                  const SizedBox(height: 16),
+                  const Text('Upload Images (max 5)', style: TextStyle(fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 8),
+                  GestureDetector(
+                    onTap: _pickImage,
+                    child: Container(
+                      height: 100,
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.black26),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      alignment: Alignment.center,
+                      child: const Icon(Icons.upload, size: 40, color: Colors.grey),
+                    ),
                   ),
-                  alignment: Alignment.center,
-                  child: _buildImagePreview(),
-                ),
-              ),
-              const SizedBox(height: 24),
-              Row(children: [
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed: _submitForm,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF004C6D),
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
+                  const SizedBox(height: 8),
+                  _buildImagePreview(),
+                  const SizedBox(height: 24),
+                  Row(children: [
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: _isSubmitting ? null : _submitForm,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF004C6D),
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                        ),
+                        child: Text(
+                          widget.docId.isEmpty ? 'Create Product' : 'Save Changes',
+                          style: const TextStyle(color: Colors.white),
+                        ),
                       ),
                     ),
-                    child: Text(
-                      widget.docId.isEmpty ? 'Create Product' : 'Save Changes',
-                      style: const TextStyle(color: Colors.white),
-                    ),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: OutlinedButton(
-                    onPressed: _resetForm,
-                    style: OutlinedButton.styleFrom(
-                      side: const BorderSide(color: Color(0xFF004C6D)),
-                      padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(14),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: _isSubmitting ? null : _resetForm,
+                        style: OutlinedButton.styleFrom(
+                          side: const BorderSide(color: Color(0xFF004C6D)),
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                        ),
+                        child: const Text('Reset', style: TextStyle(color: Color(0xFF004C6D))),
                       ),
                     ),
-                    child: const Text('Reset', style: TextStyle(color: Color(0xFF004C6D))),
-                  ),
-                ),
-              ]),
-            ],
+                  ]),
+                ],
+              ),
+            ),
           ),
-        ),
+          if (_isSubmitting)
+            const Positioned.fill(
+              child: ColoredBox(
+                color: Colors.black38,
+                child: Center(child: CircularProgressIndicator()),
+              ),
+            ),
+        ],
       ),
     );
   }

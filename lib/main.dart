@@ -59,14 +59,12 @@ class _MyAppState extends State<MyApp> {
 
       // --- static, no-arg routes ---
       initialRoute: '/',
-      routes: {
+        routes: {
         '/':            (c) => const Onboarding1(),
-        '/next':        (c) => const HomePage(),
+        '/next':        (c) => const Onboarding2(),
         '/explore':     (c) => const ExploreToday(),
         '/tour':        (c) => const TourDetailPage(tourData: {}),
         '/seller-main': (c) => const SellerMain(),
-        '/bookings':    (c) => const BookingListPage(),
-        '/home':        (c) => const SellerDashboard(),
       },
 
       onGenerateRoute: (settings) {

@@ -1,13 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:trombol_apk/screens/messageverification.dart';
 
-void main() {
-  runApp(const MaterialApp(
-    debugShowCheckedModeBanner: false,
-    home: ContactUs(),
-  ));
-}
-
 class ContactUs extends StatefulWidget {
   const ContactUs({super.key});
 
