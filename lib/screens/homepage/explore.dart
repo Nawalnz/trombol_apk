@@ -17,11 +17,12 @@ class _ExploreTodayScreenState extends State<ExploreToday> {
   int _currentIndex = 0;
 
   final List<Widget> _pages = [
-    const ExploreToday(),
+    const ExploreTodayContent(),
     const BookingsPage(),
     NotificationPage(),
     const ProfilePage(),
   ];
+
 
   void _onTabTapped(int index) {
     setState(() {
