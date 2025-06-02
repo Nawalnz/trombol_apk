@@ -23,6 +23,8 @@ class BookingPage extends StatefulWidget {
     required this.userEmail,
   });
 
+  get productImage => null;
+
   @override
   State<BookingPage> createState() => _BookingPageState();
 }
@@ -176,7 +178,24 @@ class _BookingPageState extends State<BookingPage> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (_) => PaymentPage(selectedDate: widget.selectedStartDate),
+                    builder: (_) => PaymentPage(
+                      selectedDate: widget.selectedStartDate, 
+                      email: widget.userEmail,
+                      endDate: widget.selectedEndDate,
+                      guestName: _guestNameController.text,
+                      idNumber: _idController.text,
+                      phone: _phoneController.text,
+                      productId: widget.productId,
+                      productImage: widget.productImage,
+                      productName: widget.productName,
+                      startDate: widget.selectedStartDate,
+                      totalGuest: int.tryParse(_countController.text) ?? 1,
+                      totalPrice: totalPrice,
+                      
+                      
+                      
+                      
+                    ),
                   ),
                 );
               }
