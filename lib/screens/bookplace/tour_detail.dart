@@ -22,6 +22,7 @@ class _TourDetailPageState extends State<TourDetailPage> {
   late final double price;
   late final String type;
   late final String productId;
+  late final String preview;
 
   bool isLiked = false;
 
@@ -40,6 +41,8 @@ class _TourDetailPageState extends State<TourDetailPage> {
     location = data['location'] ?? 'Unknown location';
     address = data['address'] ?? '';
     price = double.tryParse(data['price'].toString()) ?? 0.0;
+
+    preview = images.isNotEmpty ? images.first : 'https://via.placeholder.com/150';
 
     _loadLikedState();
   }
@@ -176,6 +179,7 @@ class _TourDetailPageState extends State<TourDetailPage> {
                       productName: title,
                       productType: type,
                       price: price,
+                      productImage: preview,
                     ),
                   ),
                 );

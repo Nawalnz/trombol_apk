@@ -8,6 +8,7 @@ class BookingCalendar extends StatefulWidget {
   final String productId;
   final String productType;
   final String productName;
+  final String productImage;
   final double price;
 
   const BookingCalendar({
@@ -15,6 +16,7 @@ class BookingCalendar extends StatefulWidget {
     required this.productId,
     required this.productType,
     required this.productName,
+    required this.productImage,
     required this.price,
   });
 
@@ -132,6 +134,7 @@ class _BookingCalendarState extends State<BookingCalendar> {
                   selectedEndDate: selectedEndDate,
                   onDateTap: handleDateTap,
                   isUnavailable: isDateUnavailable,
+                  isRangeSelection: isAccommodation,
                 ),
               );
             }),
@@ -166,6 +169,7 @@ class _BookingCalendarState extends State<BookingCalendar> {
                         productId: widget.productId,
                         productName: widget.productName,
                         productType: widget.productType,
+                        productImage: widget.productImage,
                         price: widget.price,
                         selectedStartDate: selectedStartDate!,
                         selectedEndDate: selectedEndDate,
@@ -208,6 +212,7 @@ class CalendarMonth extends StatelessWidget {
   final DateTime? selectedEndDate;
   final Function(DateTime) onDateTap;
   final bool Function(DateTime) isUnavailable;
+  final bool isRangeSelection;
 
   const CalendarMonth({
     super.key,
@@ -217,10 +222,11 @@ class CalendarMonth extends StatelessWidget {
     required this.selectedEndDate,
     required this.onDateTap,
     required this.isUnavailable,
+    required this.isRangeSelection,
   });
 
   bool _isInRange(DateTime date) {
-    if (selectedStartDate == null || selectedEndDate == null) return false;
+    if (!isRangeSelection || selectedStartDate == null || selectedEndDate == null) return false;
     return date.isAfter(selectedStartDate!) && date.isBefore(selectedEndDate!);
   }
 

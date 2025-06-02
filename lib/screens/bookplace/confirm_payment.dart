@@ -1,121 +1,122 @@
-import 'package:flutter/material.dart';
-import 'package:trombol_apk/screens/bookplace/booking_successful.dart';
+import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:flutter/material.dart';
+import 'package:trombol_apk/screens/homepage/explore.dart';
 
-void main() {
-  runApp(
-    const MaterialApp(
-      debugShowCheckedModeBanner: false,
-      home: PaymentInputScreen(),
-    ),
-  );
+class PaymentInputScreen extends StatefulWidget {
+  final String productId;
+  final String productName;
+  final String productImage;
+  final double totalPrice;
+  final String guestName;
+  final int totalGuest;
+  final String phone;
+  final String email;
+  final String idNumber;
+  final DateTime startDate;
+  final DateTime? endDate;
+
+  const PaymentInputScreen({
+    super.key,
+    required this.productId,
+    required this.productName,
+    required this.productImage,
+    required this.totalPrice,
+    required this.guestName,
+    required this.totalGuest,
+    required this.phone,
+    required this.email,
+    required this.idNumber,
+    required this.startDate,
+    required this.endDate,
+  });
+
+  @override
+  State<PaymentInputScreen> createState() => _PaymentInputScreenState();
 }
 
-class PaymentInputScreen extends StatelessWidget {
-  const PaymentInputScreen({super.key});
+class _PaymentInputScreenState extends State<PaymentInputScreen> {
+  bool isSaving = true;
 
-  Future<void> saveBooking() async {
+  @override
+  void initState() {
+    super.initState();
+    _saveBookingAndRedirect();
+  }
+
+  Future<void> _saveBookingAndRedirect() async {
     final user = FirebaseAuth.instance.currentUser;
-    if (user == null) return;
+
+    if (user == null) {
+      // handle error if needed
+      return;
+    }
 
     final bookingRef = FirebaseFirestore.instance.collection('bookings').doc();
 
     await bookingRef.set({
       'bookingId': bookingRef.id,
       'userId': user.uid,
-      'tourTitle': 'Damai Lagoon Resort',
-      'productId': 'JMSlXcwBBeBRzV7Urz33',
-      'selectedDate': DateTime.now().toIso8601String(), // or pass real selectedDate
-      'guestCount': 2,
-      'createdAt': FieldValue.serverTimestamp(),
+      'productId': widget.productId,
+      'productName': widget.productName,
+      'productImage': widget.productImage,
+      'guestName': widget.guestName,
+      'totalGuest': widget.totalGuest,
+      'phone': widget.phone,
+      'email': widget.email,
+      'idNumber': widget.idNumber,
+      'startDate': widget.startDate,
+      'endDate': widget.endDate,
+      'totalPrice': widget.totalPrice,
+      'status': 'pending',
+      'createdAt': DateTime.now(),
+      'expiresAt': DateTime.now().add(const Duration(hours: 48)),
+      'notifiedAdmin': true, // 👈 optional flag if admin filters this
     });
-  }
 
+    setState(() => isSaving = false);
+
+    // Wait 5 seconds before redirect
+    await Future.delayed(const Duration(seconds: 5));
+
+    if (mounted) {
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (_) => const ExploreToday()),
+            (route) => false,
+      );
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: Colors.white,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () {
-            Navigator.pop(context); // this will navigate back
-          },
-        ),
-        title: const Text('Payment', style: TextStyle(color: Colors.black)),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center,
+      backgroundColor: Colors.white,
+      body: Center(
+        child: isSaving
+            ? const Column(
+          mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Spacer(),
-
-            const Icon(Icons.qr_code_2, size: 100, color: Color(0xFF085374)),
-            const SizedBox(height: 20),
-            const Text(
-              'Confirm that you have scanned the QR and completed the payment.',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
-              textAlign: TextAlign.center,
-            ),
-
-            const Spacer(),
-
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                RichText(
-                  text: const TextSpan(
-                    text: 'RM1200',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w600,
-                      color: Color(0xFF085374),
-                    ),
-                    children: [
-                      TextSpan(
-                        text: '/2Person',
-                        style: TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.w400,
-                          color: Color(0xFF085374),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF085374),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 32,
-                      vertical: 18,
-                    ),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  onPressed: () async {
-                    await saveBooking(); // 🔥 Save booking to Firestore
-
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => const BookingSuccessScreen()),
-                    );
-                  },
-
-                  child: const Text(
-                    'Confirm',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              ],
+            CircularProgressIndicator(),
+            SizedBox(height: 16),
+            Text("Processing your booking...", style: TextStyle(fontSize: 16)),
+          ],
+        )
+            : const Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.check_circle, color: Colors.green, size: 80),
+            SizedBox(height: 16),
+            Text("Booking Submitted!", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+            SizedBox(height: 8),
+            Padding(
+              padding: EdgeInsets.symmetric(horizontal: 32),
+              child: Text(
+                "Your booking has been submitted and will be reviewed by the seller. You will be notified when it's confirmed or declined.",
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 14, color: Colors.black54),
+              ),
             ),
           ],
         ),

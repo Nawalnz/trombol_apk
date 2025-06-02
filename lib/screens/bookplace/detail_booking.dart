@@ -1,4 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:trombol_apk/screens/bookplace/payment.dart';
@@ -6,6 +5,7 @@ import 'package:trombol_apk/screens/bookplace/payment.dart';
 class BookingPage extends StatefulWidget {
   final String productId;
   final String productName;
+  final String productImage;
   final String productType;
   final double price;
   final DateTime selectedStartDate;
@@ -21,9 +21,8 @@ class BookingPage extends StatefulWidget {
     required this.selectedStartDate,
     this.selectedEndDate,
     required this.userEmail,
+    required this.productImage,
   });
-
-  get productImage => null;
 
   @override
   State<BookingPage> createState() => _BookingPageState();
@@ -40,8 +39,6 @@ class _BookingPageState extends State<BookingPage> {
         _emailController.text.isNotEmpty &&
         _idController.text.isNotEmpty;
   }
-  
-  bool _obscureText = true;
 
   final TextEditingController _guestNameController = TextEditingController();
   final TextEditingController _countController = TextEditingController(text: "1");

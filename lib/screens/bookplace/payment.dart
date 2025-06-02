@@ -169,7 +169,19 @@ class _PaymentPageState extends State<PaymentPage> {
                         ? null
                         : () => Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (_) => const PaymentInputScreen()),
+                      MaterialPageRoute(builder: (_) => PaymentInputScreen(
+                        productId: widget.productId,
+                        productName: widget.productName,
+                        productImage: widget.productImage,
+                        totalPrice: widget.totalPrice,
+                        guestName: widget.guestName,
+                        totalGuest: widget.totalGuest,
+                        phone: widget.phone,
+                        email: widget.email,
+                        idNumber: widget.idNumber,
+                        startDate: widget.startDate,
+                        endDate: widget.endDate,
+                      )),
                     ),
                     style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF085374)),
                     child: const Text("Process Payment"),
