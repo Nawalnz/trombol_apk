@@ -46,9 +46,13 @@ class PaymentPage extends StatefulWidget {
 class _PaymentPageState extends State<PaymentPage> {
   File? proofFile;
   bool isUploading = false;
+  String? savedBookingId; // to keep the doc ID
 
   Future<void> pickProofFile() async {
-    final result = await FilePicker.platform.pickFiles(type: FileType.custom, allowedExtensions: ['jpg', 'png', 'pdf']);
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['jpg', 'png', 'pdf'],
+    );
     if (result != null) {
       setState(() {
         proofFile = File(result.files.single.path!);
@@ -58,10 +62,16 @@ class _PaymentPageState extends State<PaymentPage> {
 
   Future<void> saveBookingAndExit() async {
     final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
     final docRef = FirebaseFirestore.instance.collection('bookings').doc();
+
     await docRef.set({
-      'userId': user?.uid,
+      'bookingId': docRef.id,
+      'userId': user.uid,
       'productId': widget.productId,
+      'productName': widget.productName,
+      'productImage': widget.productImage,
       'guestName': widget.guestName,
       'totalGuest': widget.totalGuest,
       'phone': widget.phone,
@@ -70,18 +80,48 @@ class _PaymentPageState extends State<PaymentPage> {
       'startDate': widget.startDate,
       'endDate': widget.endDate,
       'totalPrice': widget.totalPrice,
+      'status': 'pending',
+      'paymentStatus': 'unpaid',
       'createdAt': DateTime.now(),
       'expiresAt': DateTime.now().add(const Duration(hours: 48)),
-      'status': 'pending',
+      'notifiedAdmin': false,
+    });
+
+    setState(() {
+      savedBookingId = docRef.id;
     });
 
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("Booking saved for 48 hours")),
+      const SnackBar(content: Text("Booking saved for 48h.")),
     );
-    Navigator.pushAndRemoveUntil(
+  }
+
+  void handlePayment() {
+    if (proofFile == null || savedBookingId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Please upload proof and save booking first")),
+      );
+      return;
+    }
+
+    Navigator.push(
       context,
-      MaterialPageRoute(builder: (_) => const ExploreToday()),
-          (route) => false,
+      MaterialPageRoute(
+        builder: (_) => PaymentInputScreen(
+          bookingId: savedBookingId!,
+          productId: widget.productId,
+          productName: widget.productName,
+          productImage: widget.productImage,
+          totalPrice: widget.totalPrice,
+          guestName: widget.guestName,
+          totalGuest: widget.totalGuest,
+          phone: widget.phone,
+          email: widget.email,
+          idNumber: widget.idNumber,
+          startDate: widget.startDate,
+          endDate: widget.endDate,
+        ),
+      ),
     );
   }
 
@@ -91,27 +131,19 @@ class _PaymentPageState extends State<PaymentPage> {
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () => Navigator.pop(context),
-        ),
+        leading: BackButton(color: Colors.black),
         title: const Text('Confirm and Payment', style: TextStyle(color: Colors.black)),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Product Info
             Row(
               children: [
                 ClipRRect(
                   borderRadius: BorderRadius.circular(8),
-                  child: Image.network(
-                    widget.productImage,
-                    width: 60,
-                    height: 60,
-                    fit: BoxFit.cover,
-                  ),
+                  child: Image.network(widget.productImage, width: 60, height: 60, fit: BoxFit.cover),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -119,7 +151,6 @@ class _PaymentPageState extends State<PaymentPage> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(widget.productName, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                      const SizedBox(height: 4),
                       Text("Guest: ${widget.guestName} (${widget.totalGuest})"),
                       Text("Phone: ${widget.phone}"),
                       Text("Email: ${widget.email}"),
@@ -138,15 +169,8 @@ class _PaymentPageState extends State<PaymentPage> {
               ],
             ),
             const SizedBox(height: 30),
-            Center(
-              child: Column(
-                children: [
-                  const Text("Scan QR to Pay", style: TextStyle(fontWeight: FontWeight.bold)),
-                  const SizedBox(height: 10),
-                  Image.asset('assets/images/your_qr_image.png', width: 200, height: 200),
-                ],
-              ),
-            ),
+            Image.asset('assets/images/your_qr_image.png', width: 200, height: 200),
+
             const SizedBox(height: 24),
             ElevatedButton(
               onPressed: pickProofFile,
@@ -165,24 +189,7 @@ class _PaymentPageState extends State<PaymentPage> {
                 const SizedBox(width: 12),
                 Expanded(
                   child: ElevatedButton(
-                    onPressed: proofFile == null
-                        ? null
-                        : () => Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => PaymentInputScreen(
-                        productId: widget.productId,
-                        productName: widget.productName,
-                        productImage: widget.productImage,
-                        totalPrice: widget.totalPrice,
-                        guestName: widget.guestName,
-                        totalGuest: widget.totalGuest,
-                        phone: widget.phone,
-                        email: widget.email,
-                        idNumber: widget.idNumber,
-                        startDate: widget.startDate,
-                        endDate: widget.endDate,
-                      )),
-                    ),
+                    onPressed: handlePayment,
                     style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF085374)),
                     child: const Text("Process Payment"),
                   ),
@@ -195,3 +202,4 @@ class _PaymentPageState extends State<PaymentPage> {
     );
   }
 }
+

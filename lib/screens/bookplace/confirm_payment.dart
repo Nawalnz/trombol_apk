@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:trombol_apk/screens/homepage/explore.dart';
 
 class PaymentInputScreen extends StatefulWidget {
+  final String bookingId;
   final String productId;
   final String productName;
   final String productImage;
@@ -19,6 +20,7 @@ class PaymentInputScreen extends StatefulWidget {
 
   const PaymentInputScreen({
     super.key,
+    required this.bookingId, // 🔥 REQUIRED to update
     required this.productId,
     required this.productName,
     required this.productImage,
@@ -47,37 +49,19 @@ class _PaymentInputScreenState extends State<PaymentInputScreen> {
 
   Future<void> _saveBookingAndRedirect() async {
     final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
 
-    if (user == null) {
-      // handle error if needed
-      return;
-    }
+    final docRef = FirebaseFirestore.instance.collection('bookings').doc(widget.bookingId);
 
-    final bookingRef = FirebaseFirestore.instance.collection('bookings').doc();
-
-    await bookingRef.set({
-      'bookingId': bookingRef.id,
-      'userId': user.uid,
-      'productId': widget.productId,
-      'productName': widget.productName,
-      'productImage': widget.productImage,
-      'guestName': widget.guestName,
-      'totalGuest': widget.totalGuest,
-      'phone': widget.phone,
-      'email': widget.email,
-      'idNumber': widget.idNumber,
-      'startDate': widget.startDate,
-      'endDate': widget.endDate,
-      'totalPrice': widget.totalPrice,
-      'status': 'pending',
-      'createdAt': DateTime.now(),
-      'expiresAt': DateTime.now().add(const Duration(hours: 48)),
-      'notifiedAdmin': true, // 👈 optional flag if admin filters this
+    await docRef.update({
+      'paymentStatus': 'paid',
+      'status': 'confirmed',
+      'updatedAt': FieldValue.serverTimestamp(),
+      'notifiedAdmin': false, // or true depending on your flow
     });
 
     setState(() => isSaving = false);
 
-    // Wait 5 seconds before redirect
     await Future.delayed(const Duration(seconds: 5));
 
     if (mounted) {

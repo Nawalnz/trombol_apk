@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
-import 'package:barcode_widget/barcode_widget.dart';
-import 'package:qr_flutter/qr_flutter.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:intl/intl.dart';
+import 'package:trombol_apk/screens/bookplace/payment.dart'; // Make sure this import is correct
 
 class BookingConfirmedPage extends StatelessWidget {
-  const BookingConfirmedPage({super.key});
+  final String bookingId;
+
+  const BookingConfirmedPage({super.key, required this.bookingId});
 
   @override
   Widget build(BuildContext context) {
@@ -18,151 +21,193 @@ class BookingConfirmedPage extends StatelessWidget {
           onPressed: () => Navigator.pop(context),
         ),
         title: const Text(
-          "Booking Confirmed",
+          "Booking Ticket",
           style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
         ),
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          children: [
-            ClipPath(
-              clipper: TicketClipper(),
-              child: Container(
-                color: Colors.white,
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  children: [
-                    Row(
+      body: FutureBuilder<DocumentSnapshot>(
+        future: FirebaseFirestore.instance.collection('bookings').doc(bookingId).get(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+          if (!snapshot.hasData || !snapshot.data!.exists) {
+            return const Center(child: Text("Booking not found", style: TextStyle(color: Colors.white)));
+          }
+
+          final data = snapshot.data!.data() as Map<String, dynamic>;
+          final startDate = _formatDate(data['startDate']);
+          final endDate = data['endDate'] != null ? _formatDate(data['endDate']) : null;
+          final dateRange = endDate != null ? '$startDate - $endDate' : startDate;
+          final status = data['status'] ?? 'pending';
+          final expiresAt = data['expiresAt'] != null
+              ? _formatDate(data['expiresAt'])
+              : null;
+
+          return SingleChildScrollView(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              children: [
+                // 🧾 SUMMARY CARD
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(16),
+                  child: Container(
+                    color: Colors.white,
+                    padding: const EdgeInsets.all(20),
+                    child: Row(
                       children: [
                         ClipRRect(
-                          borderRadius: BorderRadius.circular(8),
+                          borderRadius: BorderRadius.circular(12),
                           child: Image.network(
-                            'https://www.gstatic.com/flutter-onestack-prototype/genui/example_1.jpg',
-                            width: 50,
-                            height: 50,
+                            data['productImage'] ?? '',
+                            width: 90,
+                            height: 90,
                             fit: BoxFit.cover,
+                            errorBuilder: (_, __, ___) => Image.asset('assets/images/default.jpg', width: 90, height: 90),
                           ),
                         ),
-                        const SizedBox(width: 12),
-                        const Expanded(
+                        const SizedBox(width: 16),
+                        Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text('Koh Rong Samloem',
-                                  style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 16)),
-                              SizedBox(height: 4),
-                              Row(
-                                children: [
-                                  Icon(Icons.location_on,
-                                      size: 14, color: Colors.grey),
-                                  SizedBox(width: 4),
-                                  Text(
-                                    'Kuching, Sarawak',
-                                    style: TextStyle(
-                                        fontSize: 12, color: Colors.grey),
-                                  ),
-                                ],
-                              ),
+                              Text(data['productName'] ?? 'Product',
+                                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+                              const SizedBox(height: 6),
+                              Text("Date: $dateRange"),
+                              const SizedBox(height: 8),
+                              _statusBadge(status),
                             ],
                           ),
                         ),
-                        const Icon(Icons.check_circle,
-                            color: Colors.green, size: 20),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    buildLabelValue('Date', '11/4/22 - 15/4/22'),
-                    buildLabelValue('Guest Number', '2'),
-                    buildLabelValue('Order Number', '837nx38'),
-                    const SizedBox(height: 16),
-                    BarcodeWidget(
-                      barcode: Barcode.code128(),
-                      data: '837nx38',
-                      height: 70,
-                      drawText: false,
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(20),
-              ),
-              child: Row(
-                children: [
-                  const Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('Name'),
-                        SizedBox(height: 4),
-                        Text('John',
-                            style: TextStyle(fontWeight: FontWeight.bold)),
-                        SizedBox(height: 12),
-                        Text('Price'),
-                        SizedBox(height: 4),
-                        Text('RM 1200.00',
-                            style: TextStyle(fontWeight: FontWeight.bold)),
                       ],
                     ),
                   ),
-                  QrImageView(
-                    data: 'https://yourapp.com/booking/837nx38',
-                    size: 60,
+                ),
+
+                const SizedBox(height: 24),
+
+                if (status == 'confirmed')
+                  Text("PAID", style: TextStyle(color: Colors.green[700], fontSize: 26, fontWeight: FontWeight.bold)),
+
+                if (status == 'pending') ...[
+                  Text("PENDING PAYMENT", style: TextStyle(color: Colors.grey[800], fontSize: 26, fontWeight: FontWeight.bold)),
+                  const SizedBox(height: 8),
+                  if (expiresAt != null)
+                    Text("Expires on: $expiresAt", style: const TextStyle(color: Colors.redAccent)),
+                  const SizedBox(height: 12),
+                  ElevatedButton(
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => PaymentPage(
+                            productId: data['productId'],
+                            productName: data['productName'],
+                            productImage: data['productImage'],
+                            totalPrice: data['totalPrice'],
+                            guestName: data['guestName'],
+                            totalGuest: data['totalGuest'],
+                            phone: data['phone'],
+                            email: data['email'],
+                            idNumber: data['idNumber'],
+                            startDate: (data['startDate'] as Timestamp).toDate(),
+                            endDate: data['endDate'] != null
+                                ? (data['endDate'] as Timestamp).toDate()
+                                : null,
+                            selectedDate: (data['startDate'] as Timestamp).toDate(),
+                          ),
+                        ),
+                      );
+                    },
+                    child: const Text("Complete Payment"),
                   ),
                 ],
-              ),
+
+                const SizedBox(height: 24),
+
+                // 🧾 BOOKING DETAILS
+                Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text("Booking Details", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                      const SizedBox(height: 12),
+
+                      _info("Booking ID", bookingId),
+                      _info("Customer Name", data['guestName']),
+                      _info("Phone", data['phone']),
+                      _info("Email", data['email']),
+                      _info("IC / Passport", data['idNumber']),
+                      _info("Guest / Quantity", data['totalGuest'].toString()),
+                      _info("Date", dateRange),
+                      _info("Total Price", "RM${(data['totalPrice'] ?? 0).toStringAsFixed(2)}"),
+                      _info("Status", status),
+                    ],
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }
 
-  Widget buildLabelValue(String label, String value) {
+  Widget _info(String label, String value) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Column(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label,
-              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14)),
-          const SizedBox(height: 4),
-          Text(value, style: const TextStyle(fontSize: 14)),
+          SizedBox(width: 120, child: Text("$label:", style: const TextStyle(fontWeight: FontWeight.bold))),
+          Expanded(child: Text(value)),
         ],
       ),
     );
   }
-}
 
-class TicketClipper extends CustomClipper<Path> {
-  @override
-  Path getClip(Size size) {
-    const radius = 20.0;
-    final path = Path();
-
-    path.moveTo(0, 0);
-    path.lineTo(0, size.height * 0.4 - radius);
-    path.arcToPoint(Offset(0, size.height * 0.4 + radius),
-        radius: const Radius.circular(radius), clockwise: false);
-    path.lineTo(0, size.height);
-    path.lineTo(size.width, size.height);
-    path.lineTo(size.width, size.height * 0.4 + radius);
-    path.arcToPoint(Offset(size.width, size.height * 0.4 - radius),
-        radius: const Radius.circular(radius), clockwise: false);
-    path.lineTo(size.width, 0);
-    path.close();
-
-    return path;
+  String _formatDate(dynamic date) {
+    if (date == null) return 'Unknown';
+    final dt = (date is Timestamp) ? date.toDate() : DateTime.tryParse(date.toString());
+    if (dt == null) return 'Invalid';
+    return DateFormat('dd/MM/yyyy').format(dt);
   }
 
-  @override
-  bool shouldReclip(CustomClipper<Path> oldClipper) => false;
+  Widget _statusBadge(String status) {
+    Color bgColor;
+    switch (status) {
+      case 'confirmed':
+        bgColor = Colors.green;
+        break;
+      case 'pending':
+        bgColor = Colors.grey;
+        break;
+      case 'unpaid':
+        bgColor = Colors.amber;
+        break;
+      case 'rejected':
+        bgColor = Colors.red;
+        break;
+      default:
+        bgColor = Colors.grey.shade700;
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Text(
+        status.toUpperCase(),
+        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+      ),
+    );
+  }
 }
