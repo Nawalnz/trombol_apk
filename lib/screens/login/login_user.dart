@@ -4,6 +4,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 
 // screens
 import 'package:trombol_apk/screens/homepage/explore.dart';
+import 'package:trombol_apk/screens/login/auth_gate.dart';
 import 'package:trombol_apk/screens/login/create_acc.dart';
 import 'package:trombol_apk/screens/login/forgot_pwd.dart';
 import 'package:trombol_apk/screens/seller/seller_main.dart';
@@ -181,6 +182,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
       const SizedBox(height: 14),
 
+
       const Text('Password'),
       _buildTextField(
         controller: _passwordController,
@@ -217,14 +219,38 @@ class _LoginScreenState extends State<LoginScreen> {
       SizedBox(
         width: double.infinity,
         child: ElevatedButton(
-          onPressed: _isLoading ? null : _handleLogin,
+          onPressed: () async {
+          try {
+          // Run your auth logic
+          await FirebaseAuth.instance.signInWithEmailAndPassword(
+          email: _emailController.text,
+          password: _passwordController.text,
+          );
+
+          // ✅ Navigate to AuthGate after login
+          Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (context) => const AuthGate()),
+          (route) => false,
+          );
+          } catch (e) {
+          // Handle login errors
+          ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Login failed: ${e.toString()}')),
+          );
+          }
+          },
+
           style: ElevatedButton.styleFrom(
-            backgroundColor: const Color(0xD6042B55),
+            backgroundColor: const Color(0xFF1E3D6B), // your theme blue
+            padding: const EdgeInsets.symmetric(vertical: 16),
             shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(15)),
-            minimumSize: const Size.fromHeight(50),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            elevation: 4,
           ),
-          child: _isLoading
+
+  child: _isLoading
               ? const CircularProgressIndicator(color: Colors.white)
               : const Text('Login', style: TextStyle(color: Colors.white)),
         ),

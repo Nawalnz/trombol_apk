@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:trombol_apk/screens/contactus.dart';
 import 'package:trombol_apk/screens/login/auth_gate.dart';
 import 'package:trombol_apk/screens/login/login_user.dart';
@@ -99,12 +100,16 @@ class _Onboarding2State extends State<Onboarding2> {
                     width: double.infinity,
                     height: 56,
                     child: ElevatedButton(
-                      onPressed: () {
+                      onPressed: () async {
+                        final prefs = await SharedPreferences.getInstance();
+                        await prefs.setBool('onboarding_completed', true);
+
                         Navigator.pushReplacement(
                           context,
-                          MaterialPageRoute(builder: (context) => const AuthGate()),
+                          MaterialPageRoute(builder: (context) => const LoginScreen()),
                         );
                       },
+
                       style: ElevatedButton.styleFrom(
                         backgroundColor: const Color(0xFF085373),
                         shape: RoundedRectangleBorder(

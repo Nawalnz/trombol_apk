@@ -2,6 +2,7 @@ import "package:firebase_auth/firebase_auth.dart";
 import "package:flutter/material.dart";
 import "package:firebase_core/firebase_core.dart";
 import 'package:trombol_apk/screens/bookplace/tour_detail.dart';
+import 'package:trombol_apk/screens/entry.dart';
 import 'package:trombol_apk/screens/login/auth_gate.dart';
 import 'package:trombol_apk/screens/login/login_user.dart';
 import 'package:trombol_apk/screens/navbar_button/profile/profile.dart';
@@ -40,6 +41,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     final themeNotifier= Provider.of<ThemeNotifier>(context);
 
+
     return MaterialApp(
       home: const AuthGate(),
       debugShowCheckedModeBanner: false,
@@ -57,7 +59,6 @@ class MyApp extends StatelessWidget {
 
       // --- static, no-arg routes ---
       routes: {
-        '/login':        (c) => const AuthGate(),
         '/next':        (c) => const Onboarding2(),
         '/explore':     (c) => const ExploreToday(),
         '/tour':        (c) => const TourDetailPage(tourData: {}),

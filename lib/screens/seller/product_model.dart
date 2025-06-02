@@ -33,10 +33,10 @@ class Product {
   // Method to convert Product to a Map for Firestore
   Map<String, dynamic> toMap() {
     return {
-      'prod_name': name,
-      'prod_pricePerPax': price,
-      'prod_types': category,
-      'prod_desc': description,
+      'name': name,
+      'price': price,
+      'type': category,
+      'description': description,
       'image': image,
     };
   }

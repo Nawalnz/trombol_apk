@@ -75,12 +75,12 @@ class _UploadProductPageState extends State<UploadProductPage> {
 
   Future<void> _submitForm() async {
     if (_isSubmitting) return;
-
     setState(() => _isSubmitting = true);
 
     try {
       final user = FirebaseAuth.instance.currentUser;
-      if (user == null) return;
+
+    if (user == null) return;
 
       final roleDoc = FirebaseFirestore.instance.collection('users').doc(user.uid);
       final snap = await roleDoc.get();
@@ -110,6 +110,17 @@ class _UploadProductPageState extends State<UploadProductPage> {
       final allImageUrls = [..._existingImageUrls, ...uploadedUrls];
 
       final now = FieldValue.serverTimestamp();
+
+      final searchIndex = [
+        ...name.toLowerCase().split(' '),
+        ...desc.toLowerCase().split(' '),
+        name.toLowerCase(),
+        desc.toLowerCase(),
+        _category?.toLowerCase() ?? '',
+        price.toString(),
+      ];
+
+
       final data = {
         'name': name,
         'price': price,
@@ -117,6 +128,7 @@ class _UploadProductPageState extends State<UploadProductPage> {
         'description': desc,
         'image': allImageUrls,
         'edited': now,
+        'searchIndex': searchIndex,
       };
       if (widget.docId.isEmpty) data['created'] = now;
 
@@ -314,3 +326,4 @@ class _UploadProductPageState extends State<UploadProductPage> {
     );
   }
 }
+
