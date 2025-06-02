@@ -1,21 +1,63 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:trombol_apk/screens/bookplace/detail_booking.dart';
-import 'package:trombol_apk/screens/bookplace/payment.dart';
 
+// Updated BookingCalendar class
 class BookingCalendar extends StatefulWidget {
-  const BookingCalendar({super.key});
+  final String productId;
+  final String productType;
+  final String productName;
+  final double price;
+
+  const BookingCalendar({
+    super.key,
+    required this.productId,
+    required this.productType,
+    required this.productName,
+    required this.price,
+  });
 
   @override
   State<BookingCalendar> createState() => _BookingCalendarState();
 }
 
 class _BookingCalendarState extends State<BookingCalendar> {
-  DateTime? selectedDate;
+  DateTime? selectedStartDate;
+  DateTime? selectedEndDate;
+  List<DateTime> unavailableDates = [];
+  bool isLoading = true;
 
-  final List<DateTime> unavailableDates = [
-    DateTime(2025, 4, 11),
-    DateTime(2025, 4, 12),
-  ];
+  bool get isAccommodation => widget.productType == 'accommodation';
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUnavailableDates();
+  }
+
+  Future<void> _loadUnavailableDates() async {
+    try {
+      final doc = await FirebaseFirestore.instance
+          .collection('products')
+          .doc(widget.productId)
+          .get();
+
+      final List<dynamic> dateStrings = doc.data()?['unavailableDates'] ?? [];
+
+      setState(() {
+        unavailableDates = dateStrings.map((d) {
+          if (d is Timestamp) return d.toDate();
+          if (d is String) return DateTime.tryParse(d);
+          return null;
+        }).whereType<DateTime>().toList();
+        isLoading = false;
+      });
+    } catch (e) {
+      debugPrint('Error loading unavailable dates: $e');
+      setState(() => isLoading = false);
+    }
+  }
 
   bool isDateUnavailable(DateTime date) {
     return unavailableDates.any((d) =>
@@ -25,36 +67,38 @@ class _BookingCalendarState extends State<BookingCalendar> {
   }
 
   void handleDateTap(DateTime date) {
-    final now = DateTime.now();
-    final today = DateTime(now.year, now.month, now.day);
-
-    if (date.isBefore(today)) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("You cannot select a past date")),
-      );
-      return;
-    }
-
     if (isDateUnavailable(date)) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Booking full on selected date")),
+        const SnackBar(content: Text("This date is unavailable")),
       );
       return;
     }
 
     setState(() {
-      selectedDate = date;
+      if (isAccommodation) {
+        if (selectedStartDate == null || selectedEndDate != null) {
+          selectedStartDate = date;
+          selectedEndDate = null;
+        } else if (date.isBefore(selectedStartDate!)) {
+          selectedStartDate = date;
+        } else {
+          selectedEndDate = date;
+        }
+      } else {
+        selectedStartDate = date;
+        selectedEndDate = null;
+      }
     });
   }
 
   @override
   Widget build(BuildContext context) {
+    final canProceed = selectedStartDate != null &&
+        (!isAccommodation || selectedEndDate != null);
+
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          "Available date",
-          style: TextStyle(color: Colors.black, fontFamily: 'Poppins'),
-        ),
+        title: const Text("Available date", style: TextStyle(color: Colors.black)),
         centerTitle: true,
         backgroundColor: Colors.white,
         elevation: 0,
@@ -63,20 +107,16 @@ class _BookingCalendarState extends State<BookingCalendar> {
           onPressed: () => Navigator.pop(context),
         ),
       ),
-      body: SingleChildScrollView(
+      body: isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              "Choose your booking",
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                fontFamily: 'Poppins',
-              ),
-            ),
-            ...List.generate(36, (index) {
+            const Text("Choose your booking", style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+            const SizedBox(height: 8),
+            ...List.generate(12, (index) {
               final now = DateTime.now();
               final year = now.year + ((now.month + index - 1) ~/ 12);
               final month = (now.month + index - 1) % 12 + 1;
@@ -84,11 +124,12 @@ class _BookingCalendarState extends State<BookingCalendar> {
               final monthLabel = "${_getMonthName(month)} $year";
 
               return Padding(
-                padding: const EdgeInsets.only(bottom: 32.0),
+                padding: const EdgeInsets.only(bottom: 32),
                 child: CalendarMonth(
                   month: monthLabel,
                   startDay: startDay,
-                  selectedDate: selectedDate,
+                  selectedStartDate: selectedStartDate,
+                  selectedEndDate: selectedEndDate,
                   onDateTap: handleDateTap,
                   isUnavailable: isDateUnavailable,
                 ),
@@ -108,36 +149,41 @@ class _BookingCalendarState extends State<BookingCalendar> {
                   backgroundColor: Colors.grey[300],
                   foregroundColor: Colors.black,
                   padding: const EdgeInsets.symmetric(vertical: 18),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
-                child: const Text("Back", style: TextStyle(fontFamily: 'Poppins')),
+                child: const Text("Back"),
               ),
             ),
             const SizedBox(width: 16),
             Expanded(
               child: ElevatedButton(
-                onPressed: selectedDate == null
-                    ? null
-                    : () {
+                onPressed: canProceed
+                    ? () {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) =>
-                          PaymentPage(selectedDate: selectedDate!),
+                      builder: (_) => BookingPage(
+                        productId: widget.productId,
+                        productName: widget.productName,
+                        productType: widget.productType,
+                        price: widget.price,
+                        selectedStartDate: selectedStartDate!,
+                        selectedEndDate: selectedEndDate,
+                        userEmail: FirebaseAuth.instance.currentUser?.email ?? '',
+                      ),
                     ),
                   );
-                },
+
+
+                }
+                    : null,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF085374),
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 18),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                 ),
-                child: const Text("Next", style: TextStyle(fontFamily: 'Poppins')),
+                child: const Text("Next"),
               ),
             ),
           ],
@@ -158,7 +204,8 @@ String _getMonthName(int month) {
 class CalendarMonth extends StatelessWidget {
   final String month;
   final DateTime startDay;
-  final DateTime? selectedDate;
+  final DateTime? selectedStartDate;
+  final DateTime? selectedEndDate;
   final Function(DateTime) onDateTap;
   final bool Function(DateTime) isUnavailable;
 
@@ -166,45 +213,38 @@ class CalendarMonth extends StatelessWidget {
     super.key,
     required this.month,
     required this.startDay,
-    required this.selectedDate,
+    required this.selectedStartDate,
+    required this.selectedEndDate,
     required this.onDateTap,
     required this.isUnavailable,
   });
+
+  bool _isInRange(DateTime date) {
+    if (selectedStartDate == null || selectedEndDate == null) return false;
+    return date.isAfter(selectedStartDate!) && date.isBefore(selectedEndDate!);
+  }
+
+  bool _isSelected(DateTime date) {
+    return date == selectedStartDate || date == selectedEndDate;
+  }
 
   @override
   Widget build(BuildContext context) {
     final firstDayOfMonth = DateTime(startDay.year, startDay.month, 1);
     final daysInMonth = DateUtils.getDaysInMonth(startDay.year, startDay.month);
     final weekdayOffset = firstDayOfMonth.weekday % 7;
-
     final totalItems = daysInMonth + weekdayOffset;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          month,
-          style: const TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.w600,
-            fontFamily: 'Poppins',
-          ),
-        ),
+        Text(month, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600)),
         const SizedBox(height: 8),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat']
               .map((e) => Expanded(
-            child: Center(
-              child: Text(
-                e,
-                style: const TextStyle(
-                  fontSize: 12,
-                  color: Colors.grey,
-                  fontFamily: 'Poppins',
-                ),
-              ),
-            ),
+            child: Center(child: Text(e, style: const TextStyle(fontSize: 12, color: Colors.grey))),
           ))
               .toList(),
         ),
@@ -217,40 +257,38 @@ class CalendarMonth extends StatelessWidget {
             crossAxisCount: 7,
             crossAxisSpacing: 4,
             mainAxisSpacing: 4,
-            childAspectRatio: 1, // 👈 This makes cells square
+            childAspectRatio: 1,
           ),
           itemBuilder: (context, index) {
             if (index < weekdayOffset) return const SizedBox();
             final day = index - weekdayOffset + 1;
-            final currentDate =
-            DateTime(startDay.year, startDay.month, day);
-
-            final isSelected = selectedDate?.year == currentDate.year &&
-                selectedDate?.month == currentDate.month &&
-                selectedDate?.day == currentDate.day;
+            final currentDate = DateTime(startDay.year, startDay.month, day);
 
             final unavailable = isUnavailable(currentDate);
-
-            final isDark = Theme.of(context).brightness == Brightness.dark;
+            final isSelected = _isSelected(currentDate);
+            final isInRange = _isInRange(currentDate);
 
             Color backgroundColor;
             Color textColor;
 
             if (isSelected) {
-              backgroundColor = const Color(0xFF085374); // your selected color
+              backgroundColor = const Color(0xFF085374);
               textColor = Colors.white;
+            } else if (isInRange) {
+              backgroundColor = const Color(0xFFB3E5FC);
+              textColor = Colors.black;
             } else if (unavailable) {
-              backgroundColor = isDark ? Colors.grey[800]! : Colors.grey[300]!;
+              backgroundColor = Colors.grey.shade300;
               textColor = Colors.grey;
             } else {
               backgroundColor = Colors.transparent;
-              textColor = isDark ? Colors.white : Colors.black;
+              textColor = Colors.black;
             }
 
             return Material(
               color: Colors.transparent,
               child: InkWell(
-                onTap: () => onDateTap(currentDate),
+                onTap: unavailable ? null : () => onDateTap(currentDate),
                 borderRadius: BorderRadius.circular(8),
                 child: Container(
                   decoration: BoxDecoration(
@@ -258,14 +296,7 @@ class CalendarMonth extends StatelessWidget {
                     borderRadius: BorderRadius.circular(8),
                   ),
                   child: Center(
-                    child: Text(
-                      "$day",
-                      style: TextStyle(
-                        color: textColor,
-                        fontFamily: 'Poppins',
-                        fontSize: 12,
-                      ),
-                    ),
+                    child: Text("$day", style: TextStyle(color: textColor, fontSize: 12)),
                   ),
                 ),
               ),
@@ -276,3 +307,7 @@ class CalendarMonth extends StatelessWidget {
     );
   }
 }
+
+
+
+
