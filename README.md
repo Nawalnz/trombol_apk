@@ -27,7 +27,7 @@ This project was built collaboratively by our team of 5 for the **Mobile Computi
 
 - Nawal (https://github.com/Nawalnz)  
 - Farah (https://github.com/farahismahani)  
-- Xiang Yi(https://github.com/eleo-nore)  
+- Xiang Yi (https://github.com/eleo-nore)  
 - Alysha (https://github.com/ivyjumps)  
 - Yuva (https://github.com/Rach0613)
 
